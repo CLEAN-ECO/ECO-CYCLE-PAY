@@ -1,0 +1,12 @@
+{
+  "name": "eco-cycle-pay",
+  "version": "1.0.0",
+  "description": "ECO-CYCLE-PAY - Enyata × Interswitch Buildathon 2026",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}

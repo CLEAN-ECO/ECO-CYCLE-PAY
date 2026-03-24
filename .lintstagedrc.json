@@ -1,0 +1,9 @@
+{
+  "backend/**/*.ts": [
+    "npx --prefix backend eslint --fix",
+    "npx --prefix backend prettier --write"
+  ],
+  "backend/**/*.json": [
+    "npx --prefix backend prettier --write"
+  ]
+}
