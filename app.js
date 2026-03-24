@@ -1,18 +1,20 @@
-console.log("EcoCycle Pay System Active");
+let index = 0;
 
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
-    }).format(amount);
+function startSlideshow() {
+  const slides = document.querySelectorAll(".slide");
+
+  function showSlides() {
+    slides.forEach(s => s.classList.remove("active"));
+    index = (index + 1) % slides.length;
+    slides[index].classList.add("active");
+  }
+
+  if (slides.length > 0) {
+    slides[0].classList.add("active");
+    setInterval(showSlides, 3000);
+  }
 }
 
-// Example: save data to local storage for the demo
-function saveSubmission(weight, type) {
-    const data = {
-        weight: weight,
-        type: type,
-        date: new Date().toLocaleDateString()
-    };
-    localStorage.setItem('lastSubmission', JSON.stringify(data));
+function go(page) {
+  window.location.href = page;
 }

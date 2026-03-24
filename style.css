@@ -1,89 +1,169 @@
-/* Custom Properties */
 :root {
-    --primary-green: #0E9F6E;
-    --dark-navy: #061727;
-    --text-gray: #4B5563;
+  --green: #00C853;
+  --dark-green: #003d1f;
+  --light: #e8fff3;
 }
 
+/* BACKGROUND */
 body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    overflow-x: hidden;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  color: white;
+
+  background: radial-gradient(circle at top, #00C853 0%, #003d1f 80%);
+  min-height: 100vh;
 }
 
-.text-green { color: var(--primary-green); }
-
-/* --- Animations --- */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+/* NAV */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 5%;
+  align-items: center;
 }
 
-@keyframes slideUp {
-    from { transform: translateY(100px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.logo {
+  font-size: 22px;
+  font-weight: 800;
 }
 
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+.logo span {
+  color: var(--light);
 }
 
-.fade-in { animation: fadeIn 1s ease-out; }
-.slide-up { animation: slideUp 1.2s ease-out; }
-
-/* --- Hero Layout --- */
-.hero-section {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 80px 5%;
-    min-height: 80vh;
-    gap: 40px;
+/* NAV LINKS */
+.nav-links {
+  display: flex;
+  gap: 20px;
 }
 
-.hero-content { flex: 1; }
-
-.hero-image {
-    flex: 1;
-    position: relative;
-    display: flex;
-    justify-content: center;
+.nav-links a {
+  color: white;
+  text-decoration: none;
 }
 
-.hero-image img {
-    width: 100%;
-    max-width: 500px;
-    border-radius: 30px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 80px 20px;
 }
 
-.badge {
-    background: #E1F8EF;
-    color: var(--primary-green);
-    padding: 8px 16px;
-    border-radius: 100px;
-    font-size: 14px;
-    font-weight: 600;
+.hero h1 {
+  font-size: 48px;
 }
 
-.floating-card {
-    position: absolute;
-    bottom: 30px;
-    right: 20px;
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    animation: float 3s ease-in-out infinite;
+.hero h1 span {
+  color: #A5FFCB;
 }
 
-/* Responsive for Mobile */
-@media (max-width: 768px) {
-    .hero-section {
-        flex-direction: column;
-        text-align: center;
-        padding: 40px 20px;
-    }
+/* BUTTONS */
+.btn-glow {
+  background: var(--green);
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+
+  box-shadow: 0 0 20px rgba(0,255,100,0.6);
+  transition: 0.3s;
+}
+
+.btn-glow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(0,255,100,1);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid white;
+  padding: 14px 28px;
+  border-radius: 12px;
+  color: white;
+}
+
+/* SLIDER */
+.slideshow-container {
+  margin-top: 40px;
+}
+
+.slide {
+  display: none;
+  width: 80%;
+  margin: auto;
+  border-radius: 20px;
+}
+
+.slide.active {
+  display: block;
+  animation: fade 1s;
+}
+
+@keyframes fade {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  opacity: 0.8;
+}
+/* CONTAINER */
+.container {
+  padding: 20px;
+}
+
+/* TEXT */
+.sub {
+  opacity: 0.8;
+}
+
+/* WALLET CARD */
+.wallet-card {
+  background: linear-gradient(135deg, #00C853, #003d1f);
+  padding: 20px;
+  border-radius: 20px;
+  margin: 20px 0;
+  color: white;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* STATS */
+.stats {
+  display: flex;
+  gap: 15px;
+}
+
+.stat {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* BUTTONS */
+.btn-main {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  border: none;
+  background: #00C853;
+  color: white;
+  font-weight: bold;
+}
+
+.btn-outline {
+  width: 100%;
+  margin-top: 10px;
+  padding: 15px;
+  border-radius: 12px;
+  border: 2px solid white;
+  background: transparent;
+  color: white;
 }

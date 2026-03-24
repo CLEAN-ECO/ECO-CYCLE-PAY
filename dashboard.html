@@ -1,41 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | EcoCycle Pay</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
-    <div class="container">
-        <div class="user-profile">
-            <h3>Hello, Precious! 👋</h3>
-            <p>Ready to clean the streets today?</p>
-        </div>
 
-        <div class="wallet-card-main">
-            <small>Total Balance</small>
-            <h1>₦12,450.00</h1>
-            <button class="btn-withdraw" onclick="location.href='wallet.html'">Withdraw Funds</button>
-        </div>
+<body>
 
-        <div class="stats-grid">
-            <div class="stat-box">
-                <strong>42kg</strong>
-                <p>Recycled</p>
-            </div>
-            <div class="stat-box">
-                <strong>850</strong>
-                <p>Points</p>
-            </div>
-        </div>
+<div class="container">
 
-        <div class="cta-section">
-            <button class="btn-primary" onclick="location.href='submit.html'">
-                📸 Submit New Plastic
-            </button>
-        </div>
+  <h2>Hello, Precious 👋</h2>
+  <p class="sub">Let’s earn from waste today</p>
+
+  <!-- WALLET -->
+  <div class="wallet-card">
+    <p>Total Balance</p>
+    <h1 id="balance">₦0</h1>
+    <button class="btn-glow" onclick="go('wallet.html')">
+      Withdraw
+    </button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <h3>42kg</h3>
+      <p>Recycled</p>
     </div>
-    <script src="/app.js"></script>
+
+    <div class="stat">
+      <h3>850</h3>
+      <p>Points</p>
+    </div>
+  </div>
+
+  <!-- ACTION -->
+  <button class="btn-main" onclick="go('submit.html')">
+    📸 Submit Plastic
+  </button>
+
+  <button class="btn-outline" onclick="go('verify.html')">
+    ♻️ Recycler View
+  </button>
+
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
