@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | NGO / Hub Dashboard</title>
+    <meta
+        name="description"
+        content="Manage waste collection, pickups, and recycling performance on the EcoCycle Pay NGO / Hub dashboard."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="dashboardPage" data-dashboard-role="ngo-hub">
+    <main class="dashboard-page">
+        <section class="dashboard-shell">
+            <header class="dashboard-header">
+                <div>
+                    <p class="dashboard-kicker">Welcome back, <span id="dashboardUserName">EcoCycle Partner</span></p>
+                    <h1>Coordinate recycling collection at scale</h1>
+                </div>
+                <button type="button" class="dashboard-logout" id="logoutButton">Logout</button>
+            </header>
+
+            <section class="dashboard-stats">
+                <article class="stat-card">
+                    <div class="stat-icon">♻️</div>
+                    <p>Total Waste Collected</p>
+                    <h2>1,240kg</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">🚚</div>
+                    <p>Active Pickups</p>
+                    <h2>18</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">💸</div>
+                    <p>Earnings</p>
+                    <h2>₦ 182k</h2>
+                </article>
+            </section>
+
+            <section class="quick-actions">
+                <a href="submit.html" class="action-button">Accept Waste</a>
+                <a href="submit.html" class="action-button action-button-secondary">Manage Collection</a>
+            </section>
+
+            <section class="dashboard-stats">
+                <article class="stat-card">
+                    <div class="stat-icon">🧴</div>
+                    <p>Plastic Collected</p>
+                    <h2>620kg</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <p>Earnings</p>
+                    <h2>₦ 182k</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">📍</div>
+                    <p>Active Requests</p>
+                    <h2>43</h2>
+                </article>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a href="dashboard-ngo.html" class="bottom-nav-link active">Home</a>
+        <a href="submit.html" class="bottom-nav-link">Recycle</a>
+        <a href="wallet.html" class="bottom-nav-link">Wallet</a>
+        <a href="login.html" class="bottom-nav-link">Profile</a>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>
