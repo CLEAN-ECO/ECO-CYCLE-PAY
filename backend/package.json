@@ -1,0 +1,49 @@
+{
+    "name": "eco-cycle-pay-backend",
+    "version": "1.0.0",
+    "description": "Backend for ECO-CYCLE-PAY application",
+    "main": "dist/src/index.js",
+    "scripts": {
+        "start": "node dist/src/index.js",
+        "dev": "ts-node-dev --respawn src/index.ts",
+        "build": "tsc",
+        "test": "jest",
+        "lint": "eslint --ext .ts",
+        "lint:fix": "eslint --ext .ts --fix",
+        "format": "prettier --write"
+    },
+    "keywords": [
+        "eco-cycle-pay",
+        "buildathon"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cors": "^2.8.6",
+        "dotenv": "^17.3.1",
+        "express": "^5.2.1",
+        "express-validator": "^7.3.1",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.3.1",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/jest": "^30.0.0",
+        "@types/mongoose": "^5.11.96",
+        "@types/node": "^25.5.0",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
+        "eslint": "^10.1.0",
+        "jest": "^30.3.0",
+        "prettier": "^3.8.1",
+        "ts-jest": "^29.4.6",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.57.2"
+    }
+}
