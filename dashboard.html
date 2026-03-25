@@ -1,51 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Waste Generator Dashboard</title>
+    <meta
+        name="description"
+        content="Track your EcoCycle Pay wallet balance, uploads, pickups, and recent recycling activity."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="style.css">
 </head>
+<body id="dashboardPage" data-dashboard-role="generator">
+    <main class="dashboard-page">
+        <section class="dashboard-shell">
+            <header class="dashboard-header">
+                <div>
+                    <p class="dashboard-kicker">Welcome back, <span id="dashboardUserName">EcoCycle User</span></p>
+                    <h1>Your recycling rewards are ready to grow</h1>
+                </div>
+                <button type="button" class="dashboard-logout" id="logoutButton">Logout</button>
+            </header>
 
-<body>
+            <section class="wallet-balance-card" aria-labelledby="walletHeading">
+                <div class="wallet-copy">
+                    <p class="wallet-label">Wallet Balance</p>
+                    <h2 id="walletHeading">₦ 24,500.00</h2>
+                    <p class="wallet-meta">Personal recycling wallet</p>
+                </div>
+                <div class="wallet-trend">
+                    <span class="trend-badge">+8.6%</span>
+                    <p>More than last week</p>
+                </div>
+            </section>
 
-<div class="container">
+            <section class="quick-actions" aria-label="Quick actions">
+                <a href="submit.html" class="action-button">Upload Waste</a>
+                <a href="submit.html" class="action-button">Request Pickup</a>
+                <a href="wallet.html" class="action-button action-button-secondary">Withdraw</a>
+            </section>
 
-  <h2>Hello, Precious 👋</h2>
-  <p class="sub">Let’s earn from waste today</p>
+            <section class="activity-section">
+                <div class="section-copy">
+                    <p class="dashboard-kicker">Recent Activity</p>
+                    <h2>Your latest recycling actions</h2>
+                </div>
 
-  <!-- WALLET -->
-  <div class="wallet-card">
-    <p>Total Balance</p>
-    <h1 id="balance">₦0</h1>
-    <button class="btn-glow" onclick="go('wallet.html')">
-      Withdraw
-    </button>
-  </div>
+                <div class="activity-list">
+                    <article class="activity-item">
+                        <div>
+                            <h3>Uploaded plastics for review</h3>
+                            <p>Awaiting verification from the nearest collection team.</p>
+                        </div>
+                        <span>Today</span>
+                    </article>
+                    <article class="activity-item">
+                        <div>
+                            <h3>Pickup request created</h3>
+                            <p>A pickup slot has been scheduled for your recyclable items.</p>
+                        </div>
+                        <span>Yesterday</span>
+                    </article>
+                    <article class="activity-item">
+                        <div>
+                            <h3>Withdrawal completed</h3>
+                            <p>Your wallet payout was transferred successfully.</p>
+                        </div>
+                        <span>Mar 22</span>
+                    </article>
+                </div>
+            </section>
+        </section>
+    </main>
 
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat">
-      <h3>42kg</h3>
-      <p>Recycled</p>
-    </div>
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a href="dashboard.html" class="bottom-nav-link active">Home</a>
+        <a href="submit.html" class="bottom-nav-link">Recycle</a>
+        <a href="wallet.html" class="bottom-nav-link">Wallet</a>
+        <a href="login.html" class="bottom-nav-link">Profile</a>
+    </nav>
 
-    <div class="stat">
-      <h3>850</h3>
-      <p>Points</p>
-    </div>
-  </div>
-
-  <!-- ACTION -->
-  <button class="btn-main" onclick="go('submit.html')">
-    📸 Submit Plastic
-  </button>
-
-  <button class="btn-outline" onclick="go('verify.html')">
-    ♻️ Recycler View
-  </button>
-
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

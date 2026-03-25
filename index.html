@@ -1,59 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoCycle Pay</title>
-
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay</title>
+    <meta
+        name="description"
+        content="EcoCycle Pay helps you recycle waste, earn money, and support a cleaner planet."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="style.css">
 </head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="#home" class="logo">EcoCycle Pay</a>
 
-<body onload="startSlideshow()">
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#about">About</a>
+                <a href="#features">Features</a>
+            </div>
 
-<!-- NAV -->
-<nav class="navbar">
-  <div class="logo">♻ EcoCycle<span>Pay</span></div>
+            <div class="nav-actions">
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+                <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                    Dark Mode
+                </button>
+            </div>
+        </nav>
+    </header>
 
-  <div class="nav-links">
-    <a href="#">Home</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="wallet.html">Wallet</a>
-  </div>
+    <main>
+        <section class="hero-section" id="home">
+            <div class="hero-content">
+                <h1>Welcome to EcoCycle Pay</h1>
+                <p>Turn your waste into cash and save the planet</p>
+            </div>
+        </section>
 
-  <button class="btn-glow" onclick="go('login.html')">Login</button>
-</nav>
+        <section class="slider-section" id="about" aria-label="Recycling image slider">
+            <div class="slider-wrapper">
+                <div class="slide active">
+                    <img
+                        src="https://images.unsplash.com/photo-1528323273322-d81458248d40?auto=format&fit=crop&w=1400&q=80"
+                        alt="Plastic waste collected for recycling"
+                    >
+                </div>
+                <div class="slide">
+                    <img
+                        src="https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=1400&q=80"
+                        alt="Outdoor recycling bins"
+                    >
+                </div>
+                <div class="slide">
+                    <img
+                        src="https://images.unsplash.com/photo-1621451537084-482c73073a0f?auto=format&fit=crop&w=1400&q=80"
+                        alt="Plastic bottles ready to be recycled"
+                    >
+                </div>
+                <div class="slide">
+                    <img
+                        src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1400&q=80"
+                        alt="Plastic materials sorted for recycling"
+                    >
+                </div>
+                <div class="slide">
+                    <img
+                        src="https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=1400&q=80"
+                        alt="Recycling station with bottles and sorted waste"
+                    >
+                </div>
 
-<!-- HERO -->
-<section class="hero">
+                <div class="slider-overlay">
+                    <a href="signup.html" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </section>
 
-  <div class="hero-text">
-    <h1>
-      Turn Waste Into  
-      <span>Instant Cash</span>
-    </h1>
+        <section class="features-section" id="features">
+            <div class="cards-grid">
+                <article class="card">
+                    <div class="card-icon">♻️</div>
+                    <h2>Recycling</h2>
+                    <p>Turn waste into reusable resources</p>
+                </article>
 
-    <p>Recycle plastic. Earn money. Power a greener Nigeria.</p>
+                <article class="card">
+                    <div class="card-icon">💰</div>
+                    <h2>Earn Money</h2>
+                    <p>Get paid for your waste</p>
+                </article>
 
-    <div class="cta-group">
-      <button class="btn-glow" onclick="go('submit.html')">Start Earning</button>
-      <button class="btn-outline" onclick="go('login.html')">Login</button>
-    </div>
-  </div>
+                <article class="card">
+                    <div class="card-icon">🌍</div>
+                    <h2>Save the Planet</h2>
+                    <p>Reduce pollution</p>
+                </article>
 
-  <div class="slideshow-container">
-    <img class="slide active" src="https://images.unsplash.com/photo-1591193111183-018e69814404?auto=format&fit=crop&w=900&q=80">
-    <img class="slide" src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80">
-    <img class="slide" src="https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=900&q=80">
-  </div>
+                <article class="card">
+                    <div class="card-icon">📍</div>
+                    <h2>Nearby Hubs</h2>
+                    <p>Connect to recycling centers</p>
+                </article>
+            </div>
+        </section>
+    </main>
 
-</section>
+    <footer class="site-footer">
+        <p>EcoCycle Pay &copy; 2026</p>
+    </footer>
 
-<footer>
-  Built for Enyata Buildathon 🚀
-</footer>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
