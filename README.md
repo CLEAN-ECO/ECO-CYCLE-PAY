@@ -6,9 +6,19 @@ Enyata × Interswitch Buildathon 2026
 ```
 eco-cycle-pay/
 ├── backend/          # Node.js + TypeScript + MongoDB API
-├── frontend/         # (To be set up)
+│   ├── src/
+│   ├── .eslintrc.json
+│   ├── .prettierrc.json
+│   ├── tsconfig.json
+│   └── package.json
+├── frontend/         # HTML/CSS/JavaScript Frontend Application
+│   ├── assets/
+│   │   ├── styles/
+│   │   ├── js/
+│   │   └── images/
+│   └── src/
 ├── .husky/           # Git hooks (Husky)
-├── .lintstagedrc.json # Lint-staged configuration
+├── .lintstagedrc.json # Lint-staged configuration (root level)
 └── package.json      # Root-level dependencies
 ```
 
@@ -56,7 +66,18 @@ Quick start:
 ```bash
 cd backend
 npm install
-npm run dev    # Start development server
+npm run dev    # Start development server at http://localhost:5000
+```
+
+### Frontend Setup
+
+See [frontend/README.md](frontend/README.md) for detailed frontend setup instructions.
+
+Quick start:
+```bash
+cd frontend
+cd src
+Start live-server on index.html    # Start development server at http://localhost:5500
 ```
 
 ## Commit Rules & Code Quality
@@ -78,6 +99,7 @@ git commit -m "commit description"
 
 **If a commit fails:**
 - Fix unused variable warnings
+- Fix formatting issues (Prettier will auto-format, re-stage if needed)
 - Re-stage changes: `git add <files>`
 - Try committing again
 

@@ -41,6 +41,13 @@ This guide walks through setting up the ECO-CYCLE-PAY project with Husky and lin
    ```bash
    cd backend
    npm install
+   cd ..
+   ```
+
+4. **Set up frontend:**
+   ```bash
+   cd frontend
+   cd src
    ```
 
 ### Verification
@@ -144,9 +151,12 @@ npm run format
 ### Root Level `.lintstagedrc.json`
 ```json
 {
-  "backend/**/*.ts": [
-    "eslint --fix",
-    "prettier --write"
+  "backend/src/**/*.ts": [
+    "npx --prefix backend eslint --fix",
+    "npx --prefix backend prettier --write"
+  ],
+  "backend/**/*.json": [
+    "npx --prefix backend prettier --write"
   ]
 }
 ```
@@ -208,24 +218,25 @@ eco-cycle-pay/
 ├── .husky/
 │   ├── _ /                    # Husky internal directory  
 │   └── pre-commit             # Pre-commit git hook
-├── .lintstagedrc.json         # Staged files configuration
+├── .lintstagedrc.json         # Staged files configuration (root level)
 ├── setup-hooks.bat            # Windows setup script
 ├── setup-hooks.sh             # macOS/Linux setup script
-├── package.json               # Root dependencies
+├── package.json               # Root dependencies (Husky, lint-staged)
 ├── backend/
-│   ├── .eslintrc.json
-│   ├── .prettierrc.json
-│   ├── .lintstagedrc.json     # (DEPRECATED - use root level)
-│   └── ...
-└── frontend/
-    └── ...
+│   ├── src/                   # Backend source code
+│   ├── .eslintrc.json         # ESLint backend-specific rules
+│   ├── .prettierrc.json       # Prettier backend-specific rules
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── jest.config.js         # Jest testing configuration
+│   └── package.json           # Backend dependencies
+├── frontend/
+│   ├── src/                   # Frontend source code
+|   └── assets/                # Frontend assets (images, styles, etc.)
+|       ├── styles/            # CSS files
+|       ├── js/                # JavaScript files
+|       └── images/            # Image files
+└── SETUP_GUIDE.md             # This file
 ```
-
-## Next Steps
-
-- Set up frontend similarly when ready
-- Consider adding other hooks (pre-push, commit-msg) as needed
-- Document any project-specific linting rules
 
 ## References
 
