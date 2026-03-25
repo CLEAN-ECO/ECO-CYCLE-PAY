@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Multi-Role Signup</title>
+    <meta
+        name="description"
+        content="Create your EcoCycle Pay account as a waste generator, vendor, or NGO / Hub."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="../assets/styles/style.css">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-shell auth-shell-wide">
+            <div class="auth-intro">
+                <a href="../index.html" class="back-link">Back to Home</a>
+                <p class="signup-eyebrow">Multi-role onboarding</p>
+                <h1>Build your recycling identity with EcoCycle Pay</h1>
+                <p class="signup-copy">
+                    Choose your role, complete your account details, verify your email, and set up your wallet.
+                </p>
+            </div>
+
+            <div class="auth-card">
+                <section class="flow-step active" id="signupStep">
+                    <div class="panel-header">
+                        <h2>Create Your Account</h2>
+                        <p>Select a role to unlock the right onboarding flow.</p>
+                    </div>
+
+                    <form id="signupForm" class="auth-form" novalidate>
+                        <div class="role-card-grid" id="roleCardGrid">
+                            <button type="button" class="role-card" data-role="generator">
+                                <span class="role-card-icon">♻️</span>
+                                <strong>Waste Generator</strong>
+                                <small>Individuals and places generating recyclable waste</small>
+                            </button>
+                            <button type="button" class="role-card" data-role="vendor">
+                                <span class="role-card-icon">🛒</span>
+                                <strong>Vendor</strong>
+                                <small>Businesses that buy or trade recyclable materials</small>
+                            </button>
+                            <button type="button" class="role-card" data-role="ngo-hub">
+                                <span class="role-card-icon">🌍</span>
+                                <strong>NGO / Hub</strong>
+                                <small>Organizations and collection hubs managing recovery</small>
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="role" id="selectedRole" required>
+
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Full Name</span>
+                                <input type="text" name="full_name" placeholder="Enter your full name" required>
+                            </label>
+
+                            <label class="field">
+                                <span>Email</span>
+                                <input type="email" name="email" placeholder="Enter your email" required>
+                            </label>
+
+                            <label class="field">
+                                <span>Phone Number</span>
+                                <input type="tel" name="phone" placeholder="Enter your phone number" required>
+                            </label>
+
+                            <label class="field">
+                                <span>Password</span>
+                                <input type="password" name="password" id="signupPassword" placeholder="Create a password" required>
+                            </label>
+
+                            <label class="field">
+                                <span>Confirm Password</span>
+                                <input
+                                    type="password"
+                                    name="confirm_password"
+                                    placeholder="Confirm your password"
+                                    required
+                                >
+                            </label>
+                        </div>
+
+                        <div class="password-strength-box">
+                            <div class="password-strength-top">
+                                <span>Password Strength</span>
+                                <strong id="passwordStrengthLabel" class="strength-label weak">Weak</strong>
+                            </div>
+                            <div class="strength-meter">
+                                <span class="strength-bar" id="strengthBar"></span>
+                            </div>
+                            <div class="strength-checklist">
+                                <span id="ruleUppercase">Uppercase</span>
+                                <span id="ruleLowercase">Lowercase</span>
+                                <span id="ruleNumber">Number</span>
+                                <span id="ruleLength">8+ Characters</span>
+                            </div>
+                        </div>
+
+                        <div class="role-fields" id="generatorFields" hidden>
+                            <div class="section-mini-header">
+                                <h3>Waste Generator Details</h3>
+                                <p>Select the type that best describes your waste source.</p>
+                            </div>
+                            <label class="field field-full">
+                                <span>Waste Generator Type</span>
+                                <select name="generator_subtype" id="generatorSubtype">
+                                    <option value="">Select type</option>
+                                    <option value="Household">Household</option>
+                                    <option value="Hotel">Hotel</option>
+                                    <option value="School">School</option>
+                                    <option value="Event Center">Event Center</option>
+                                    <option value="Restaurant">Restaurant</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Conference Center">Conference Center</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="role-fields" id="vendorFields" hidden>
+                            <div class="section-mini-header">
+                                <h3>Vendor Details</h3>
+                                <p>Tell us about your recycling or trading business.</p>
+                            </div>
+                            <div class="form-grid">
+                                <label class="field">
+                                    <span>Business Name</span>
+                                    <input type="text" name="vendor_business_name" placeholder="Enter business name">
+                                </label>
+
+                                <label class="field">
+                                    <span>Business Type</span>
+                                    <input type="text" name="vendor_business_type" placeholder="e.g. Recycler, Trader">
+                                </label>
+
+                                <label class="field">
+                                    <span>Location</span>
+                                    <input type="text" name="vendor_location" placeholder="Enter location">
+                                </label>
+
+                                <label class="field">
+                                    <span>Years of Operation</span>
+                                    <input type="number" name="vendor_years" min="0" placeholder="How many years?">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="role-fields" id="ngoHubFields" hidden>
+                            <div class="section-mini-header">
+                                <h3>NGO / Hub Details</h3>
+                                <p>Select your type to reveal the right information fields.</p>
+                            </div>
+
+                            <label class="field field-full">
+                                <span>Select Type</span>
+                                <select name="ngo_hub_type" id="ngoHubType">
+                                    <option value="">Select type</option>
+                                    <option value="NGO">NGO</option>
+                                    <option value="Hub">Hub</option>
+                                </select>
+                            </label>
+
+                            <div id="ngoFields" hidden>
+                                <div class="form-grid">
+                                    <label class="field">
+                                        <span>Organization Name</span>
+                                        <input type="text" name="ngo_name" placeholder="Enter organization name">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Registration Number</span>
+                                        <input type="text" name="ngo_registration" placeholder="CAC or official ID">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Years Active</span>
+                                        <input type="number" name="ngo_years" min="0" placeholder="How many years?">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Focus Area</span>
+                                        <input type="text" name="ngo_focus" placeholder="Environment, recycling, etc.">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Location</span>
+                                        <input type="text" name="ngo_location" placeholder="Enter location">
+                                    </label>
+
+                                    <label class="field field-full">
+                                        <span>Mission Description</span>
+                                        <textarea name="ngo_mission" rows="4" placeholder="Describe your mission"></textarea>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="hubFields" hidden>
+                                <div class="form-grid">
+                                    <label class="field">
+                                        <span>Hub Name</span>
+                                        <input type="text" name="hub_name" placeholder="Enter hub name">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Daily Capacity (kg/day)</span>
+                                        <input type="number" name="hub_capacity" min="0" placeholder="Capacity per day">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Location</span>
+                                        <input type="text" name="hub_location" placeholder="Enter location">
+                                    </label>
+
+                                    <label class="field">
+                                        <span>Availability</span>
+                                        <select name="hub_availability">
+                                            <option value="">Select option</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </label>
+
+                                    <label class="field field-full">
+                                        <span>Waste Types Accepted</span>
+                                        <input type="text" name="hub_waste_types" placeholder="Plastic, cans, paper, metals">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="form-message" id="signupMessage" hidden></p>
+                        <button type="submit" class="btn btn-primary form-submit" id="createAccountButton" disabled>
+                            Create Account
+                        </button>
+                    </form>
+
+                    <p class="form-footer">
+                        Already have an account?
+                        <a href="login.html">Login</a>
+                    </p>
+                </section>
+
+                <section class="flow-step" id="verificationStep" hidden>
+                    <div class="panel-header">
+                        <h2>Email Verification</h2>
+                        <p>Enter the code sent to your email address to continue.</p>
+                    </div>
+
+                    <form id="verificationForm" class="auth-form" novalidate>
+                        <label class="field">
+                            <span>Verification Code</span>
+                            <input type="text" name="verification_code" placeholder="Enter OTP" required>
+                        </label>
+
+                        <p class="form-message" id="verificationMessage" hidden></p>
+                        <button type="submit" class="btn btn-primary form-submit">Verify</button>
+                    </form>
+                </section>
+
+                <section class="flow-step" id="walletStep" hidden>
+                    <div class="panel-header">
+                        <h2>Wallet Setup</h2>
+                        <p>Create your 4-digit wallet PIN and confirm your recovery phrase.</p>
+                    </div>
+
+                    <form id="walletSetupForm" class="auth-form" novalidate>
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Wallet PIN</span>
+                                <input type="password" name="wallet_pin" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" required>
+                            </label>
+
+                            <label class="field">
+                                <span>Confirm Wallet PIN</span>
+                                <input
+                                    type="password"
+                                    name="confirm_wallet_pin"
+                                    inputmode="numeric"
+                                    maxlength="4"
+                                    placeholder="Confirm PIN"
+                                    required
+                                >
+                            </label>
+                        </div>
+
+                        <div class="secret-phrase-card">
+                            <div class="section-mini-header">
+                                <h3>Your Secret Phrase</h3>
+                                <p>Keep this phrase safe. You will confirm three words below.</p>
+                            </div>
+                            <div class="secret-phrase-grid" id="secretPhraseGrid"></div>
+                        </div>
+
+                        <div class="confirm-words-grid" id="confirmWordsGrid"></div>
+
+                        <p class="form-message" id="walletMessage" hidden></p>
+                        <button type="submit" class="btn btn-primary form-submit">Continue</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>

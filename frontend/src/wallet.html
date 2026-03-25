@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Wallet</title>
+    <meta
+        name="description"
+        content="View your EcoCycle Pay wallet balance, referral link, and recent transactions."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="../assets/styles/style.css">
+</head>
+<body id="walletPage">
+    <main class="utility-page">
+        <section class="utility-shell">
+            <header class="page-header">
+                <a href="dashboard.html" class="back-link">Back</a>
+                <p class="dashboard-kicker">Wallet</p>
+                <h1>Manage your EcoCycle Pay balance</h1>
+                <p class="page-subtitle">Withdraw earnings, track transactions, and share your referral link.</p>
+            </header>
+
+            <section class="wallet-balance-card wallet-balance-card-large">
+                <div class="wallet-copy">
+                    <p class="wallet-label">Available Balance</p>
+                    <h2 id="walletBalanceAmount">₦ 24,500.00</h2>
+                    <p class="wallet-meta">Wallet ID: ECP-2048-8892</p>
+                </div>
+                <div class="wallet-trend">
+                    <a href="#" class="btn btn-light">Withdraw</a>
+                </div>
+            </section>
+
+            <section class="referral-card">
+                <div>
+                    <p class="dashboard-kicker">Referral Link</p>
+                    <h2>Invite others and earn together</h2>
+                    <p id="referralLinkText">ecocyclepay.com/ref?user=00000</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="copyReferralButton">Copy Link</button>
+            </section>
+
+            <section class="activity-section">
+                <div class="section-copy">
+                    <p class="dashboard-kicker">Transactions</p>
+                    <h2>Recent Wallet Activity</h2>
+                </div>
+
+                <div class="transaction-list">
+                    <article class="transaction-item">
+                        <div>
+                            <h3>₦ 3,500.00</h3>
+                            <p>Withdrawal</p>
+                        </div>
+                        <span>Mar 24, 2026</span>
+                    </article>
+                    <article class="transaction-item">
+                        <div>
+                            <h3>₦ 2,200.00</h3>
+                            <p>Recycling payout</p>
+                        </div>
+                        <span>Mar 22, 2026</span>
+                    </article>
+                    <article class="transaction-item">
+                        <div>
+                            <h3>₦ 1,150.00</h3>
+                            <p>Referral bonus</p>
+                        </div>
+                        <span>Mar 19, 2026</span>
+                    </article>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>
