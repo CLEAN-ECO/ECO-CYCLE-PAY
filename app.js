@@ -94,9 +94,12 @@ const feedback = {
     modal.hidden = true;
     modal.innerHTML = `
       <div class="feedback-modal-card">
-        <div class="panel-header">
-          <h2>Share Feedback</h2>
-          <p>Tell us what you experienced on this page.</p>
+        <div class="feedback-modal-head">
+          <div class="panel-header">
+            <h2>Share Feedback</h2>
+            <p>Tell us what you experienced on this page.</p>
+          </div>
+          <button type="button" class="feedback-close" id="dismissFeedbackButton" aria-label="Close feedback dialog">x</button>
         </div>
         <form id="feedbackForm" class="auth-form" novalidate>
           <label class="field">
@@ -133,6 +136,7 @@ const feedback = {
     };
     btn.addEventListener('click', open);
     $('#closeFeedbackButton', modal)?.addEventListener('click', close);
+    $('#dismissFeedbackButton', modal)?.addEventListener('click', close);
     modal.addEventListener('click', event => {
       if (event.target === modal) close();
     });
@@ -144,20 +148,27 @@ const feedback = {
       const form = event.currentTarget;
       const submitBtn = $('#submitFeedbackButton', modal);
       const fd = new FormData(form);
+      const payload = {
+        page: document.title,
+        name: String(fd.get('name') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        text: String(fd.get('text') || '').trim()
+      };
+      if (!payload.name || !payload.email || !payload.text) {
+        msg($('#feedbackMessage', modal), 'Please complete all feedback fields.');
+        return;
+      }
       loading(submitBtn, true);
+      msg($('#feedbackMessage', modal), '');
       try {
-        await api('/api/feedback', {
+        const result = await api('/api/feedback', {
           method: 'POST',
-          body: {
-            page: document.title,
-            name: String(fd.get('name') || '').trim(),
-            email: String(fd.get('email') || '').trim(),
-            text: String(fd.get('text') || '').trim()
-          },
+          body: payload,
           auth: false
         });
-        alert('Feedback received. Thank you.');
-        close();
+        if (!result.ok) throw new Error('Feedback could not be submitted.');
+        msg($('#feedbackMessage', modal), 'Feedback received. Thank you.');
+        setTimeout(close, 900);
       } catch (error) {
         msg($('#feedbackMessage', modal), error.message || 'Could not send feedback.');
       } finally {
@@ -183,8 +194,14 @@ const api = async (url, { method = 'GET', body, auth = true } = {}) => {
     throw new Error(window.location.protocol === 'file:' ? 'Open the app through the backend server, not as a local file. Run `npm start` and use `http://localhost:3000`.' : 'Could not reach the server. Make sure `npm start` is running.');
   }
   clearTimeout(timeout);
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Request failed.');
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    data = {};
+  }
+  if (!response.ok) throw new Error(data.error || raw || `Request failed (${response.status}).`);
   return data;
 };
 

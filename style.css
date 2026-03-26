@@ -2136,15 +2136,86 @@ body.modal-open {
     box-shadow: var(--shadow-md);
 }
 
+.feedback-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.feedback-close {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.feedback-close:hover,
+.feedback-close:focus-visible {
+    background: rgba(15, 23, 42, 0.1);
+}
+
 .feedback-modal-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.feedback-modal-actions .btn {
+    min-width: 160px;
+}
+
+.feedback-modal-actions .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.feedback-modal-actions .btn-secondary:hover,
+.feedback-modal-actions .btn-secondary:focus-visible {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text);
 }
 
 body.dark .feedback-modal-card {
     background: var(--surface);
     border-color: var(--border);
+}
+
+body.dark .feedback-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.22);
+}
+
+body.dark .feedback-close:hover,
+body.dark .feedback-close:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+body.dark .feedback-modal-actions .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.22);
+}
+
+body.dark .feedback-modal-actions .btn-secondary:hover,
+body.dark .feedback-modal-actions .btn-secondary:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+}
+
+@media (max-width: 520px) {
+    .feedback-modal-actions .btn {
+        width: 100%;
+    }
 }
 
 .startup-error {
