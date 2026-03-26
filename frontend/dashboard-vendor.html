@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Vendor Dashboard</title>
+    <meta
+        name="description"
+        content="Monitor waste supply, orders, and vendor operations from the EcoCycle Pay dashboard."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="assets/styles/style.css">
+</head>
+<body id="dashboardPage" data-dashboard-role="vendor">
+    <main class="dashboard-page">
+        <section class="dashboard-shell">
+            <header class="dashboard-header">
+                <div>
+                    <p class="dashboard-kicker">Welcome back, <span id="dashboardUserName">EcoCycle Vendor</span></p>
+                    <h1>Stay ahead of supply and incoming orders</h1>
+                </div>
+                <button type="button" class="dashboard-logout" id="logoutButton">Logout</button>
+            </header>
+
+            <p class="form-message" id="dashboardFeedback" hidden></p>
+
+            <section class="dashboard-stats">
+                <article class="stat-card">
+                    <div class="stat-icon">Boxes</div>
+                    <p>Orders Received</p>
+                    <h2 id="vendorOrdersReceived">0</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">Waste</div>
+                    <p>Available Waste Supply</p>
+                    <h2 id="vendorWasteSupply">0kg</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">Value</div>
+                    <p>Order Value</p>
+                    <h2 id="vendorOrderValue">₦0</h2>
+                </article>
+            </section>
+
+            <section class="quick-actions">
+                <a href="manage-orders.html" class="action-button">Manage Orders</a>
+                <a href="wallet.html" class="action-button action-button-secondary">Wallet</a>
+            </section>
+
+            <section class="dashboard-duo-grid">
+                <section class="activity-section">
+                    <div class="section-copy">
+                        <p class="dashboard-kicker">Supply Watch</p>
+                        <h2>Recent Vendor Activity</h2>
+                    </div>
+
+                    <div class="activity-list" id="vendorActivityList"></div>
+                    <div class="empty-state" id="vendorActivityEmptyState" hidden>
+                        <h3>No vendor activity yet</h3>
+                        <p>Incoming uploads and paid orders will appear here.</p>
+                    </div>
+                </section>
+
+                <section class="activity-section">
+                    <div class="section-copy">
+                        <p class="dashboard-kicker">Latest Operations</p>
+                        <h2>Accepted order and paid seller</h2>
+                    </div>
+
+                    <div class="activity-list" id="vendorLatestPanel"></div>
+                    <div class="empty-state" id="vendorLatestEmptyState" hidden>
+                        <h3>No completed activity yet</h3>
+                        <p>The latest accepted order and paid seller will appear here.</p>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a href="dashboard-vendor.html" class="bottom-nav-link active">Home</a>
+        <a href="manage-orders.html" class="bottom-nav-link">Orders</a>
+        <a href="wallet.html" class="bottom-nav-link">Wallet</a>
+        <a href="profile.html" class="bottom-nav-link">Profile</a>
+    </nav>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

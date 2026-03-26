@@ -2,8 +2,13 @@
   "name": "eco-cycle-pay",
   "version": "1.0.0",
   "description": "ECO-CYCLE-PAY - Enyata × Interswitch Buildathon 2026",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "devDependencies": {
     "husky": "^9.1.7",

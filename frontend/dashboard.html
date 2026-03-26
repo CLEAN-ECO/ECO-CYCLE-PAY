@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Dashboard</title>
+    <meta
+        name="description"
+        content="Track your EcoCycle Pay wallet, pickups, uploads, and rewards from one dashboard."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="assets/styles/style.css">
+</head>
+<body id="dashboardPage" data-dashboard-role="generator">
+    <main class="dashboard-page">
+        <section class="dashboard-shell">
+            <header class="dashboard-header">
+                <div>
+                    <p class="dashboard-kicker">Welcome back, <span id="dashboardUserName">EcoCycle User</span></p>
+                    <h1 id="dashboardHeadline">Track your recycling earnings and activity</h1>
+                    <p class="page-subtitle">See pickups, uploads, wallet changes, and rewards in one place.</p>
+                </div>
+
+                <div class="dashboard-header-actions">
+                    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">Dark Mode</button>
+                    <button type="button" class="dashboard-logout" id="logoutButton">Logout</button>
+                </div>
+            </header>
+
+            <p class="form-message" id="dashboardFeedback" hidden></p>
+
+            <section class="dashboard-stats" aria-label="Summary statistics">
+                <article class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <p>Wallet Balance</p>
+                    <h2 id="dashboardBalance">₦2,500</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">♻️</div>
+                    <p>Total Waste Recycled</p>
+                    <h2 id="dashboardWaste">12kg</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <p>Points Earned</p>
+                    <h2 id="dashboardPoints">320</h2>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">🌱</div>
+                    <p>CO2 Saved</p>
+                    <h2 id="dashboardCo2">28kg</h2>
+                </article>
+            </section>
+
+            <section class="wallet-balance-card" aria-labelledby="walletHeading">
+                <div class="wallet-copy">
+                    <p class="wallet-label">Available Balance</p>
+                    <h2 id="walletHeading">₦2,500</h2>
+                    <p class="wallet-meta">Wallet ID: <span id="walletIdMask">ECP-****-1024</span></p>
+                </div>
+                <div class="wallet-trend">
+                    <span class="trend-badge" id="pickupCountBadge">3 Pickups</span>
+                    <p>Live wallet activity</p>
+                </div>
+            </section>
+
+            <section class="quick-actions" aria-label="Quick actions">
+                <a href="submit.html" class="action-button">Request Pickup</a>
+                <a href="upload.html" class="action-button">Upload Waste</a>
+                <a href="wallet.html" class="action-button action-button-secondary">Wallet</a>
+                <a href="profile.html" class="action-button action-button-secondary">Profile</a>
+            </section>
+
+            <section class="dashboard-duo-grid">
+                <section class="activity-section">
+                    <div class="section-copy">
+                        <p class="dashboard-kicker">Recent Activity</p>
+                        <h2>What happened recently</h2>
+                    </div>
+
+                    <div class="activity-list" id="recentActivityList"></div>
+                    <div class="empty-state" id="activityEmptyState" hidden>
+                        <h3>Start recycling to earn rewards</h3>
+                        <p>No transactions yet</p>
+                    </div>
+                </section>
+
+                <section class="activity-section">
+                    <div class="section-copy">
+                        <p class="dashboard-kicker">Pickup Status</p>
+                        <h2>Current pickup requests</h2>
+                    </div>
+
+                    <div class="status-list" id="pickupStatusList"></div>
+                    <div class="empty-state" id="pickupEmptyState" hidden>
+                        <h3>No pickups yet</h3>
+                        <p>Your pickup requests will appear here once created.</p>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a href="dashboard.html" class="bottom-nav-link active">Home</a>
+        <a href="submit.html" class="bottom-nav-link">Pickup</a>
+        <a href="wallet.html" class="bottom-nav-link">Wallet</a>
+        <a href="profile.html" class="bottom-nav-link">Profile</a>
+    </nav>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
