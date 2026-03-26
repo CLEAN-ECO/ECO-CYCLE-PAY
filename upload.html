@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoCycle Pay | Request Pickup</title>
+    <title>EcoCycle Pay | Upload Waste</title>
     <meta
         name="description"
-        content="Request a recycling pickup with EcoCycle Pay."
+        content="Upload waste details for verification with EcoCycle Pay."
     >
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,18 +16,18 @@
     >
     <link rel="stylesheet" href="style.css">
 </head>
-<body id="pickupPage">
+<body id="uploadPage">
     <main class="utility-page">
         <section class="utility-shell">
             <header class="page-header">
                 <a href="dashboard.html" class="back-link">Back</a>
-                <p class="dashboard-kicker">Request Pickup</p>
-                <h1>Schedule a collection for your recyclable waste</h1>
-                <p class="page-subtitle">Choose waste type, quantity, location, and pickup time for your request.</p>
+                <p class="dashboard-kicker">Upload Waste</p>
+                <h1>Submit recyclable waste for review</h1>
+                <p class="page-subtitle">Add the category, quantity, location, and an optional image for demo upload.</p>
             </header>
 
             <section class="auth-card utility-card">
-                <form id="pickupForm" class="auth-form" novalidate>
+                <form id="uploadForm" class="auth-form" novalidate>
                     <div class="form-grid">
                         <label class="field">
                             <span>Waste Type</span>
@@ -46,24 +46,19 @@
                             <input type="number" name="quantity" min="1" placeholder="Enter quantity" required>
                         </label>
 
-                        <label class="field">
+                        <label class="field field-full">
                             <span>Location</span>
-                            <input type="text" name="location" placeholder="Enter pickup location" required>
-                        </label>
-
-                        <label class="field">
-                            <span>Preferred Pickup Time</span>
-                            <input type="datetime-local" name="pickup_time" required>
+                            <input type="text" name="location" placeholder="Enter upload location" required>
                         </label>
 
                         <label class="field field-full">
-                            <span>Optional Notes</span>
-                            <textarea name="notes" rows="4" placeholder="Add access notes or pickup instructions"></textarea>
+                            <span>Optional Image</span>
+                            <input type="file" name="waste_image" accept="image/*">
                         </label>
                     </div>
 
-                    <p class="form-message" id="pickupMessage" hidden></p>
-                    <button type="submit" class="btn btn-primary form-submit" id="pickupSubmitButton">Request Pickup</button>
+                    <p class="form-message" id="uploadMessage" hidden></p>
+                    <button type="submit" class="btn btn-primary form-submit" id="uploadSubmitButton">Upload Waste</button>
                 </form>
             </section>
         </section>

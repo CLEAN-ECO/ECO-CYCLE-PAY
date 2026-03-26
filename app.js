@@ -1,658 +1,88 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const USER_STORAGE_KEY = "eco_user";
-  const PENDING_SIGNUP_KEY = "eco_pending_signup";
-  const SECRET_PHRASE_KEY = "eco_pending_phrase";
-  const body = document.body;
+const KEYS={user:'eco_user',pending:'eco_pending_signup',phrase:'eco_pending_phrase',pickups:'eco_pickups',uploads:'eco_uploads',tx:'eco_transactions',flash:'eco_flash_message',theme:'eco_theme'};
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const user=()=>load(KEYS.user,null), pickups=()=>load(KEYS.pickups,[]), uploads=()=>load(KEYS.uploads,[]), txs=()=>load(KEYS.tx,[]);
+const fmtMoney=n=>new Intl.NumberFormat('en-NG',{style:'currency',currency:'NGN',maximumFractionDigits:0}).format(Number(n||0));
+const fmtDate=d=>new Date(d).toLocaleDateString('en-NG',{month:'short',day:'numeric',year:'numeric'});
+const rid=()=>`ECP-${Date.now()}`;
+const goRole=r=>r==='vendor'?'dashboard-vendor.html':r==='ngo-hub'?'dashboard-ngo.html':'dashboard.html';
+const flash=m=>localStorage.setItem(KEYS.flash,m);
+const takeFlash=()=>{const m=localStorage.getItem(KEYS.flash);if(m)localStorage.removeItem(KEYS.flash);return m};
+const msg=(el,t='')=>{if(!el)return;el.textContent=t;el.hidden=!t};
+const loading=(btn,on,text='Processing...')=>{if(!btn)return;if(!btn.dataset.t)btn.dataset.t=btn.textContent;btn.disabled=on;btn.textContent=on?text:btn.dataset.t};
+const setStep=(steps,cur)=>steps.forEach(s=>{if(!s)return;s.hidden=s!==cur;s.classList.toggle('active',s===cur)});
+const mask=id=>`ECP-****-${String(id||'1024').slice(-4)}`;
+const strength=p=>{const c={u:/[A-Z]/.test(p),l:/[a-z]/.test(p),n:/\d/.test(p),x:p.length>=8},s=Object.values(c).filter(Boolean).length;return{c,s,label:s===4?'Strong':s>=2?'Medium':'Weak',cls:s===4?'strong':s>=2?'medium':'weak',ok:s===4}};
+const phrase=()=>{const w='green wallet planet plastic future bottle reward pickup forest impact carbon energy clean market supply vendor earth solar river paper metal cycle secure profit growth hub mission nature points value'.split(' '),o=[];while(o.length<12){const x=w[Math.floor(Math.random()*w.length)];if(!o.includes(x))o.push(x)}return o};
+const renderPhrase=(arr,pos)=>{const g=$('#secretPhraseGrid'), c=$('#confirmWordsGrid'); if(!g||!c)return; g.innerHTML=arr.map((w,i)=>`<div class="phrase-word"><span>${i+1}</span><strong>${w}</strong></div>`).join(''); c.innerHTML=pos.map(i=>`<label class="field"><span>Confirm word #${i+1}</span><input type="text" name="confirm_word_${i}" required></label>`).join('')};
+const ensureDemo=u=>{if(!u)return;const ps=pickups(),us=uploads(),ts=txs(); if(!u.wallet)u.wallet={}; if(typeof u.wallet.balance!=='number')u.wallet.balance=2500; if(typeof u.referralCount!=='number')u.referralCount=0; if(!u.referralLink)u.referralLink=`ecocyclepay.com/ref?user=${u.id}`; save(KEYS.user,u);
+ if(!ps.some(x=>x.userId===u.id)) save(KEYS.pickups,[...ps,{id:`p-${u.id}-1`,userId:u.id,role:u.role,wasteType:'Plastics',quantity:5,location:'Yaba, Lagos',pickupTime:new Date().toISOString(),notes:'Front gate',status:'Pending',createdAt:new Date().toISOString()},{id:`p-${u.id}-2`,userId:u.id,role:u.role,wasteType:'Papers',quantity:4,location:'Ikeja, Lagos',pickupTime:new Date().toISOString(),notes:'',status:'Accepted',createdAt:new Date(Date.now()-86400000).toISOString()},{id:`p-${u.id}-3`,userId:u.id,role:u.role,wasteType:'Beverage Cans',quantity:3,location:'Lekki, Lagos',pickupTime:new Date().toISOString(),notes:'',status:'Completed',createdAt:new Date(Date.now()-172800000).toISOString()}]);
+ if(!us.some(x=>x.userId===u.id)) save(KEYS.uploads,[...us,{id:`u-${u.id}-1`,userId:u.id,role:u.role,wasteType:'Plastics',quantity:12,location:'Surulere, Lagos',imageName:'',createdAt:new Date(Date.now()-43200000).toISOString()}]);
+ if(!ts.some(x=>x.userId===u.id)) save(KEYS.tx,[...ts,{id:`t-${u.id}-1`,userId:u.id,type:'Recycling payout',amount:2500,status:'Completed',createdAt:new Date(Date.now()-86400000).toISOString()},{id:`t-${u.id}-2`,userId:u.id,type:'Referral bonus',amount:500,status:'Completed',createdAt:new Date(Date.now()-172800000).toISOString()}]);
+};
+const allActs=u=>{const a=[...uploads().filter(x=>x.userId===u.id).map(x=>({t:`Uploaded ${x.quantity}kg ${x.wasteType}`,d:`Uploaded from ${x.location}`,dt:x.createdAt})),...pickups().filter(x=>x.userId===u.id).map(x=>({t:`Pickup request for ${x.wasteType}`,d:`${x.quantity}kg from ${x.location}`,dt:x.createdAt})),...txs().filter(x=>x.userId===u.id).map(x=>({t:x.type,d:`${fmtMoney(x.amount)} � ${x.status}`,dt:x.createdAt}))]; return a.sort((a,b)=>new Date(b.dt)-new Date(a.dt))};
+const applyTheme=t=>{const next=t==='dark'?'dark':'light';document.body.classList.toggle('dark',next==='dark'); const btn=$('#theme-toggle')||$('#darkModeToggle'); if(btn){btn.setAttribute('aria-pressed',String(next==='dark'));btn.textContent=next==='dark'?'Light Mode':'Dark Mode'} localStorage.setItem('eco_theme',next)};
+applyTheme(localStorage.getItem('eco_theme')||'light');
+const themeBtn=$('#theme-toggle')||$('#darkModeToggle'); if(themeBtn)themeBtn.addEventListener('click',()=>applyTheme(document.body.classList.contains('dark')?'light':'dark'));
+const slides=$$('.slide');
+if(slides.length){
+ let i=0;
+ const showSlide=index=>slides.forEach((slide,slideIndex)=>slide.classList.toggle('active',slideIndex===index));
+ showSlide(0);
+ setInterval(()=>{
+  i=(i+1)%slides.length;
+  showSlide(i);
+ },5000);
+}
+const logout=$('#logoutButton'); if(logout)logout.addEventListener('click',()=>{[KEYS.user,KEYS.pending,KEYS.phrase].forEach(k=>localStorage.removeItem(k)); location.href='login.html';});
+
+const signupForm=$('#signupForm'), verifyForm=$('#verificationForm'), walletForm=$('#walletSetupForm');
+if(signupForm&&verifyForm&&walletForm){
+ const steps=[$('#signupStep'),$('#verificationStep'),$('#walletStep')], roleInput=$('#selectedRole'), roleTitle=$('#selectedRoleTitle'), details=$('#signupDetailsPanel'), formContainer=$('#signupFormContainer'), roleSelection=$('#roleSelection'), roleGrid=$('#roleCardGrid'), ngoType=$('#ngoHubType'), createBtn=$('#createAccountButton');
+ const roles={generator:'Waste Generator',vendor:'Vendor','ngo-hub':'NGO / Hub'}; const gen=$('#generatorFields'), ven=$('#vendorFields'), ngoHub=$('#ngoHubFields'), ngo=$('#ngoFields'), hub=$('#hubFields');
+ const signupMsg=$('#signupMessage'), verMsg=$('#verificationMessage'), wallMsg=$('#walletMessage');
+ const pwd=$('#signupPassword'), cpwd=$('#confirmSignupPassword'), tp=$('#toggleSignupPassword'), tcp=$('#toggleConfirmSignupPassword');
+ const showPwd=(i,b)=>{if(!i||!b)return; b.addEventListener('click',()=>{const p=i.type==='password';i.type=p?'text':'password';b.textContent=p?'Hide':'Show'})}; showPwd(pwd,tp); showPwd(cpwd,tcp);
+ const req=(wrap,on)=>wrap?$$('input,select,textarea',wrap).forEach(i=>i.required=on):null;
+ const toggleWrap=(wrap,on,display='block')=>{if(!wrap)return; wrap.hidden=!on; if(on){wrap.removeAttribute('hidden'); wrap.style.display=display;} else {wrap.setAttribute('hidden','hidden'); wrap.style.display='none';}};
+ const syncCreateButton=()=>{if(createBtn)createBtn.disabled=!(roleInput.value&&syncStrength().ok)};
+ const setRole=r=>{roleInput.value=r; $$('.role-card').forEach(c=>c.classList.toggle('active',c.dataset.role===r)); if(details){details.hidden=!r; if(r)details.removeAttribute('hidden');} if(roleSelection){if(r){roleSelection.setAttribute('hidden','hidden'); roleSelection.style.display='none';}else{roleSelection.removeAttribute('hidden'); roleSelection.style.display='block';}} if(formContainer){if(r){formContainer.hidden=false; formContainer.removeAttribute('hidden'); formContainer.style.display='block'; formContainer.style.opacity='1'; formContainer.style.visibility='visible'; formContainer.animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:280,easing:'ease-out'}); setTimeout(()=>formContainer.scrollIntoView({behavior:'smooth',block:'start'}),40);}else{formContainer.hidden=true; formContainer.setAttribute('hidden','hidden'); formContainer.style.display='none';}} if(roleTitle)roleTitle.textContent=roles[r]||'Selected Role'; toggleWrap(gen,r==='generator','block'); toggleWrap(ven,r==='vendor','block'); toggleWrap(ngoHub,r==='ngo-hub','block'); req(gen,r==='generator'); req(ven,r==='vendor'); req(ngoHub,r==='ngo-hub'); if(r!=='ngo-hub'&&ngoType){ngoType.value=''; toggleWrap(ngo,false,'block'); toggleWrap(hub,false,'block'); req(ngo,false); req(hub,false);} localStorage.setItem('selectedRole',r||''); msg(signupMsg,''); syncCreateButton()};
+ if(formContainer){formContainer.hidden=true; formContainer.setAttribute('hidden','hidden'); formContainer.style.display='none';}
+ if(details)details.hidden=true;
+ if(roleSelection){roleSelection.hidden=false; roleSelection.removeAttribute('hidden'); roleSelection.style.display='block';}
+ if(createBtn)createBtn.disabled=true;
+ if(roleGrid){roleGrid.addEventListener('click',e=>{const card=e.target.closest('.role-card'); if(!card)return; setRole(card.dataset.role||'');});}
+ $('#changeRoleButton')?.addEventListener('click',()=>{setRole(''); if(roleSelection)roleSelection.scrollIntoView({behavior:'smooth',block:'start'})});
+ ngoType?.addEventListener('change',()=>{const t=ngoType.value; toggleWrap(ngo,t==='NGO','block'); toggleWrap(hub,t==='Hub','block'); req(ngo,t==='NGO'); req(hub,t==='Hub');});
+ const syncStrength=()=>{const r=strength(pwd?.value||''); const l=$('#passwordStrengthLabel'), bar=$('#strengthBar'); if(l){l.textContent=r.label;l.className=`strength-label ${r.cls}`;l.style.color=r.label==='Strong'?'green':r.label==='Medium'?'orange':'red'} if(bar){bar.className=`strength-bar ${r.cls}`;bar.style.width=`${r.s/4*100}%`} [['#ruleUppercase',r.c.u],['#ruleLowercase',r.c.l],['#ruleNumber',r.c.n],['#ruleLength',r.c.x]].forEach(([s,v])=>$(s)?.classList.toggle('valid',v)); return r;}; pwd?.addEventListener('input',syncStrength); syncStrength(); syncCreateButton();
+ const preset=new URLSearchParams(location.search).get('role'); if(preset)setRole(preset); else setRole('');
+ signupForm.addEventListener('submit',e=>{e.preventDefault(); msg(signupMsg,''); const fd=new FormData(signupForm), role=String(fd.get('role')||'').trim(), fullName=String(fd.get('full_name')||'').trim(), email=String(fd.get('email')||'').trim(), phone=String(fd.get('phone')||'').trim(), password=String(fd.get('password')||''), confirmPassword=String(fd.get('confirm_password')||'');
+  if(!role) return msg(signupMsg,'Please select a role to continue.');
+  if(!fullName||!email||!phone||!password||!confirmPassword) return msg(signupMsg,'Please complete all required fields.');
+  if(password!==confirmPassword) return msg(signupMsg,'Passwords do not match.');
+  if(!syncStrength().ok) return msg(signupMsg,'Password must be strong before you continue.');
+  if(!fd.get('terms_consent')||!fd.get('privacy_consent')) return msg(signupMsg,'Please accept the terms and privacy policy.');
+  let subtype='', userType=role, roleData={};
+  if(role==='generator'){subtype=String(fd.get('generator_subtype')||'').trim(); if(!subtype)return msg(signupMsg,'Please choose a waste generator type.'); userType=subtype; roleData.generatorSubtype=subtype;}
+  if(role==='vendor'){const businessName=String(fd.get('vendor_business_name')||'').trim(), businessType=String(fd.get('vendor_business_type')||'').trim(), location=String(fd.get('vendor_location')||'').trim(), years=String(fd.get('vendor_years')||'').trim(), registration=String(fd.get('vendor_registration')||'').trim(); if(!businessName||!businessType||!location||!years||!registration)return msg(signupMsg,'Please complete all vendor details.'); subtype=businessType; userType=businessType; roleData={businessName,businessType,location,yearsOfOperation:years,registrationNumber:registration};}
+  if(role==='ngo-hub'){userType=String(fd.get('ngo_hub_type')||'').trim(); subtype=userType; if(!userType)return msg(signupMsg,'Please select NGO or Community Hub.'); if(userType==='NGO'){const ngo_name=String(fd.get('ngo_name')||'').trim(), ngo_registration=String(fd.get('ngo_registration')||'').trim(), ngo_years=String(fd.get('ngo_years')||'').trim(), ngo_focus=String(fd.get('ngo_focus')||'').trim(), ngo_location=String(fd.get('ngo_location')||'').trim(), ngo_mission=String(fd.get('ngo_mission')||'').trim(); if(!ngo_name||!ngo_registration||!ngo_years||!ngo_focus||!ngo_location||!ngo_mission)return msg(signupMsg,'Please complete all NGO details.'); roleData={organizationName:ngo_name,registrationNumber:ngo_registration,yearsActive:ngo_years,focusArea:ngo_focus,location:ngo_location,missionDescription:ngo_mission};} if(userType==='Hub'){const hub_name=String(fd.get('hub_name')||'').trim(), hub_registration=String(fd.get('hub_registration')||'').trim(), hub_location=String(fd.get('hub_location')||'').trim(), hub_availability=String(fd.get('hub_availability')||'').trim(), hub_capacity=String(fd.get('hub_capacity')||'').trim(), hub_waste_types=String(fd.get('hub_waste_types')||'').trim(); if(!hub_name||!hub_registration||!hub_location||!hub_availability||!hub_capacity||!hub_waste_types)return msg(signupMsg,'Please complete all hub details.'); roleData={hubName:hub_name,registrationNumber:hub_registration,location:hub_location,availability:hub_availability,dailyCapacity:hub_capacity,wasteTypesAccepted:hub_waste_types};}}
+  save(KEYS.pending,{id:rid(),fullName,email,phone,password,role,subtype,userType,referralCode:String(fd.get('referral_code')||'').trim(),roleData}); msg(verMsg,'Check your email for verification code.'); setStep(steps,$('#verificationStep')); });
+ verifyForm.addEventListener('submit',e=>{e.preventDefault(); const code=String(new FormData(verifyForm).get('verification_code')||'').trim(); if(!code)return msg(verMsg,'Please enter the verification code.'); const arr=phrase(), pos=[...arr.keys()].sort(()=>Math.random()-.5).slice(0,3).sort((a,b)=>a-b); save(KEYS.phrase,{arr,pos}); renderPhrase(arr,pos); setStep(steps,$('#walletStep'));});
+ walletForm.addEventListener('submit',e=>{e.preventDefault(); msg(wallMsg,''); const fd=new FormData(walletForm), pin=String(fd.get('wallet_pin')||'').trim(), cpin=String(fd.get('confirm_wallet_pin')||'').trim(), p=load(KEYS.phrase,null), pu=load(KEYS.pending,null); if(!pin||!cpin)return msg(wallMsg,'Please enter and confirm your wallet PIN.'); if(!/^\d{4}$/.test(pin))return msg(wallMsg,'Wallet PIN must be exactly 4 digits.'); if(pin!==cpin)return msg(wallMsg,'Wallet PINs do not match.'); if(!p||!pu)return msg(wallMsg,'Your signup session expired. Please start again.'); const ok=p.pos.every(i=>String(fd.get(`confirm_word_${i}`)||'').trim().toLowerCase()===p.arr[i]); if(!ok)return msg(wallMsg,'Secret phrase confirmation does not match.'); const u={...pu,wallet:{pin,balance:2500,secretPhrase:p.arr},referralLink:`ecocyclepay.com/ref?user=${pu.id}`,referralCount:0}; save(KEYS.user,u); localStorage.removeItem(KEYS.pending); localStorage.removeItem(KEYS.phrase); ensureDemo(u); flash('Account created successfully'); location.href=goRole(u.role);});
+}
+
+const loginForm=$('#loginForm'); if(loginForm){const m=$('#loginMessage'), p=$('#loginPassword'), t=$('#toggleLoginPassword'); t?.addEventListener('click',()=>{const k=p.type==='password';p.type=k?'text':'password';t.textContent=k?'Hide':'Show'}); loginForm.addEventListener('submit',e=>{e.preventDefault(); msg(m,''); const fd=new FormData(loginForm), id=String(fd.get('identifier')||'').trim(), pw=String(fd.get('password')||''), u=user(); if(!id||!pw)return msg(m,'Please enter both login fields.'); if(!u)return msg(m,'No account found. Please sign up first.'); if(!([u.email,u.phone].includes(id))||u.password!==pw)return msg(m,'Invalid login details.'); location.href=goRole(u.role);});}
+
+const dp=$('#dashboardPage'); if(dp){const u=user(); if(!u){location.href='login.html';} if((dp.dataset.dashboardRole||'generator')!==u.role){location.href=goRole(u.role);} ensureDemo(u); const f=takeFlash(); if(f)msg($('#dashboardFeedback'),f); const ps=pickups().filter(x=>x.userId===u.id), us=uploads().filter(x=>x.userId===u.id), ts=txs().filter(x=>x.userId===u.id), waste=us.reduce((a,b)=>a+Number(b.quantity||0),0), points=waste*20+ps.length*10, co2=Math.round(waste*2.3); $('#dashboardUserName')&&($('#dashboardUserName').textContent=u.fullName||'EcoCycle User'); $('#dashboardBalance')&&($('#dashboardBalance').textContent=fmtMoney(u.wallet?.balance||2500)); $('#dashboardWaste')&&($('#dashboardWaste').textContent=`${waste||12}kg`); $('#dashboardPoints')&&($('#dashboardPoints').textContent=`${points||320}`); $('#dashboardCo2')&&($('#dashboardCo2').textContent=`${co2||28}kg`); $('#walletHeading')&&($('#walletHeading').textContent=fmtMoney(u.wallet?.balance||2500)); $('#walletIdMask')&&($('#walletIdMask').textContent=mask(u.id)); $('#pickupCountBadge')&&($('#pickupCountBadge').textContent=`${ps.length||3} Pickups`);
+ const acts=allActs(u).slice(0,5), al=$('#recentActivityList'), ae=$('#activityEmptyState'); if(al){if(!acts.length){al.innerHTML=''; if(ae)ae.hidden=false;} else {if(ae)ae.hidden=true; al.innerHTML=acts.map(a=>`<article class="activity-item"><div><h3>${a.t}</h3><p>${a.d}</p></div><span>${fmtDate(a.dt)}</span></article>`).join('')}}
+ const pl=$('#pickupStatusList'), pe=$('#pickupEmptyState'); if(pl){if(!ps.length){pl.innerHTML=''; if(pe)pe.hidden=false;} else {if(pe)pe.hidden=true; pl.innerHTML=ps.slice().reverse().map(p=>`<article class="status-card"><div><h3>${p.wasteType} � ${p.quantity}kg</h3><p>${p.location}</p></div><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></article>`).join('')}} }
+
+const pickupForm=$('#pickupForm'); if(pickupForm){const u=user(); if(!u){location.href='login.html';} $('input[name="pickup_time"]',pickupForm)?.setAttribute('min',new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)); pickupForm.addEventListener('submit',e=>{e.preventDefault(); const m=$('#pickupMessage'), b=$('#pickupSubmitButton'), fd=new FormData(pickupForm), wasteType=String(fd.get('waste_type')||'').trim(), quantity=String(fd.get('quantity')||'').trim(), locationTxt=String(fd.get('location')||'').trim(), pickupTime=String(fd.get('pickup_time')||'').trim(); if(!wasteType||!quantity||!locationTxt||!pickupTime)return msg(m,'Please complete all required pickup fields.'); loading(b,true); setTimeout(()=>{save(KEYS.pickups,[...pickups(),{id:`pickup-${Date.now()}`,userId:u.id,role:u.role,wasteType,quantity:Number(quantity),location:locationTxt,pickupTime,notes:String(fd.get('notes')||'').trim(),status:'Pending',createdAt:new Date().toISOString()}]); loading(b,false); msg(m,'Pickup request sent'); flash('Pickup request sent'); pickupForm.reset();},900);});}
+
+const uploadForm=$('#uploadForm'); if(uploadForm){const u=user(); if(!u){location.href='login.html';} uploadForm.addEventListener('submit',e=>{e.preventDefault(); const m=$('#uploadMessage'), b=$('#uploadSubmitButton'), fd=new FormData(uploadForm), wasteType=String(fd.get('waste_type')||'').trim(), quantity=String(fd.get('quantity')||'').trim(), locationTxt=String(fd.get('location')||'').trim(); if(!wasteType||!quantity||!locationTxt)return msg(m,'Please complete all required upload fields.'); loading(b,true); setTimeout(()=>{const file=$('input[name="waste_image"]',uploadForm)?.files?.[0]; save(KEYS.uploads,[...uploads(),{id:`upload-${Date.now()}`,userId:u.id,role:u.role,wasteType,quantity:Number(quantity),location:locationTxt,imageName:file?file.name:'',createdAt:new Date().toISOString()}]); loading(b,false); msg(m,'Waste uploaded'); flash('Waste uploaded'); uploadForm.reset();},900);});}
+
+const wp=$('#walletPage'); if(wp){const u=user(); if(!u){location.href='login.html';} ensureDemo(u); $('#walletBalanceAmount')&&($('#walletBalanceAmount').textContent=fmtMoney(u.wallet?.balance||2500)); $('#walletIdMask')&&($('#walletIdMask').textContent=mask(u.id)); $('#referralLinkText')&&($('#referralLinkText').textContent=u.referralLink||'ecocyclepay.com/ref?user=00000'); $('#referralCountText')&&($('#referralCountText').textContent=`${u.referralCount||0} referrals`); const renderTx=()=>{const list=$('#walletTransactionList'), empty=$('#walletEmptyState'), arr=txs().filter(x=>x.userId===u.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); if(!list)return; if(!arr.length){list.innerHTML=''; if(empty)empty.hidden=false; return;} if(empty)empty.hidden=true; list.innerHTML=arr.map(t=>`<article class="transaction-item"><div><h3>${fmtMoney(t.amount)}</h3><p>${t.type} � ${t.status}</p></div><span>${fmtDate(t.createdAt)}</span></article>`).join('')}; renderTx(); $('#copyReferralButton')?.addEventListener('click',async()=>{const link=$('#referralLinkText')?.textContent||''; try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(link);}finally{$('#copyReferralButton').textContent='Copied';}}); $('#withdrawForm')?.addEventListener('submit',e=>{e.preventDefault(); const m=$('#withdrawMessage'), b=$('#withdrawSubmitButton'), fd=new FormData($('#withdrawForm')), account_name=String(fd.get('account_name')||'').trim(), bank_name=String(fd.get('bank_name')||'').trim(), account_number=String(fd.get('account_number')||'').trim(), amount=Number(fd.get('amount')||0), pin=String(fd.get('wallet_pin')||'').trim(); if(!account_name||!bank_name||!account_number||!amount||!pin)return msg(m,'Please complete all withdrawal fields.'); if(pin!==String(u.wallet?.pin||''))return msg(m,'Wallet PIN is incorrect.'); if(amount>Number(u.wallet?.balance||0))return msg(m,'Insufficient wallet balance.'); loading(b,true); setTimeout(()=>{u.wallet.balance=Number(u.wallet.balance||0)-amount; save(KEYS.user,u); save(KEYS.tx,[{id:`txn-${Date.now()}`,userId:u.id,type:'Withdrawal',amount,status:'Processing',createdAt:new Date().toISOString()},...txs()]); $('#walletBalanceAmount')&&($('#walletBalanceAmount').textContent=fmtMoney(u.wallet.balance)); loading(b,false); msg(m,'Withdrawal processing'); flash('Withdrawal processing'); $('#withdrawForm').reset(); renderTx();},1000);});}
+
+const pp=$('#profilePage'); if(pp){const u=user(), g=$('#profileGrid'), e=$('#profileEmptyState'); if(!u){if(e)e.hidden=false;} else if(g){const items=[['Full Name',u.fullName],['Email',u.email],['Phone Number',u.phone],['Role',u.role],['Subtype',u.userType||u.subtype],['Referral Link',u.referralLink]]; Object.entries(u.roleData||{}).forEach(([k,v])=>items.push([k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()),String(v)])); g.innerHTML=items.map(([l,v])=>`<article class="profile-card"><p>${l}</p><h3>${v||'Not set'}</h3></article>`).join('');}}
 
-  const themeToggle =
-    document.getElementById("theme-toggle") ||
-    document.getElementById("darkModeToggle");
-  const slides = document.querySelectorAll(".slide");
-
-  const redirectByRole = (role) => {
-    if (role === "vendor") {
-      return "dashboard-vendor.html";
-    }
-
-    if (role === "ngo-hub") {
-      return "dashboard-ngo.html";
-    }
-
-    return "dashboard.html";
-  };
-
-  const getStoredUser = () => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) return null;
-
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
-
-  const showMessage = (element, message) => {
-    if (!element) return;
-    element.textContent = message;
-    element.hidden = false;
-  };
-
-  const hideMessage = (element) => {
-    if (!element) return;
-    element.textContent = "";
-    element.hidden = true;
-  };
-
-  const setActiveStep = (steps, activeStep) => {
-    steps.forEach((step) => {
-      if (!step) return;
-      const isActive = step === activeStep;
-      step.hidden = !isActive;
-      step.classList.toggle("active", isActive);
-    });
-  };
-
-  const generateSecretPhrase = () => {
-    const words = [
-      "green",
-      "wallet",
-      "planet",
-      "plastic",
-      "future",
-      "bottle",
-      "reward",
-      "pickup",
-      "forest",
-      "impact",
-      "carbon",
-      "energy",
-      "clean",
-      "market",
-      "supply",
-      "vendor",
-      "earth",
-      "solar",
-      "river",
-      "paper",
-      "metal",
-      "cycle",
-      "secure",
-      "profit",
-      "growth",
-      "hub",
-      "mission",
-      "nature",
-      "points",
-      "value",
-    ];
-
-    const phrase = [];
-    while (phrase.length < 12) {
-      const word = words[Math.floor(Math.random() * words.length)];
-      if (!phrase.includes(word)) {
-        phrase.push(word);
-      }
-    }
-    return phrase;
-  };
-
-  const renderSecretPhrase = (phrase, positions) => {
-    const secretPhraseGrid = document.getElementById("secretPhraseGrid");
-    const confirmWordsGrid = document.getElementById("confirmWordsGrid");
-
-    if (!secretPhraseGrid || !confirmWordsGrid) return;
-
-    secretPhraseGrid.innerHTML = phrase
-      .map(
-        (word, index) =>
-          `<div class="phrase-word"><span>${index + 1}</span><strong>${word}</strong></div>`
-      )
-      .join("");
-
-    confirmWordsGrid.innerHTML = positions
-      .map(
-        (position) => `
-          <label class="field">
-            <span>Confirm word #${position + 1}</span>
-            <input
-              type="text"
-              name="confirm_word_${position}"
-              data-word-index="${position}"
-              placeholder="Enter word ${position + 1}"
-              required
-            >
-          </label>
-        `
-      )
-      .join("");
-  };
-
-  const updatePasswordStrength = (password) => {
-    const checks = {
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /\d/.test(password),
-      length: password.length >= 8,
-    };
-
-    const score = Object.values(checks).filter(Boolean).length;
-
-    let label = "Weak";
-    let levelClass = "weak";
-
-    if (score >= 4) {
-      label = "Strong";
-      levelClass = "strong";
-    } else if (score >= 2) {
-      label = "Medium";
-      levelClass = "medium";
-    }
-
-    return {
-      checks,
-      score,
-      label,
-      levelClass,
-      isStrong: score === 4,
-    };
-  };
-
-  if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      const isDark = body.classList.toggle("dark");
-      themeToggle.setAttribute("aria-pressed", String(isDark));
-    });
-  }
-
-  if (slides.length > 0) {
-    let currentSlide = 0;
-
-    const showSlide = (index) => {
-      slides.forEach((slide, slideIndex) => {
-        slide.classList.toggle("active", slideIndex === index);
-      });
-    };
-
-    showSlide(currentSlide);
-
-    setInterval(() => {
-      currentSlide = (currentSlide + 1) % slides.length;
-      showSlide(currentSlide);
-    }, 5000);
-  }
-
-  const signupForm = document.getElementById("signupForm");
-  const verificationForm = document.getElementById("verificationForm");
-  const walletSetupForm = document.getElementById("walletSetupForm");
-
-  if (signupForm && verificationForm && walletSetupForm) {
-    const signupStep = document.getElementById("signupStep");
-    const verificationStep = document.getElementById("verificationStep");
-    const walletStep = document.getElementById("walletStep");
-    const createAccountButton = document.getElementById("createAccountButton");
-    const selectedRole = document.getElementById("selectedRole");
-    const roleCards = document.querySelectorAll(".role-card");
-    const signupPassword = document.getElementById("signupPassword");
-    const signupMessage = document.getElementById("signupMessage");
-    const verificationMessage = document.getElementById("verificationMessage");
-    const walletMessage = document.getElementById("walletMessage");
-    const passwordStrengthLabel = document.getElementById("passwordStrengthLabel");
-    const strengthBar = document.getElementById("strengthBar");
-    const ruleUppercase = document.getElementById("ruleUppercase");
-    const ruleLowercase = document.getElementById("ruleLowercase");
-    const ruleNumber = document.getElementById("ruleNumber");
-    const ruleLength = document.getElementById("ruleLength");
-    const generatorFields = document.getElementById("generatorFields");
-    const vendorFields = document.getElementById("vendorFields");
-    const ngoHubFields = document.getElementById("ngoHubFields");
-    const ngoHubType = document.getElementById("ngoHubType");
-    const ngoFields = document.getElementById("ngoFields");
-    const hubFields = document.getElementById("hubFields");
-    const steps = [signupStep, verificationStep, walletStep];
-
-    const toggleFieldRequirements = (container, shouldRequire) => {
-      if (!container) return;
-      const inputs = container.querySelectorAll("input, select, textarea");
-      inputs.forEach((input) => {
-        input.required = shouldRequire;
-      });
-    };
-
-    const setRoleVisibility = (role) => {
-      generatorFields.hidden = role !== "generator";
-      vendorFields.hidden = role !== "vendor";
-      ngoHubFields.hidden = role !== "ngo-hub";
-
-      toggleFieldRequirements(generatorFields, role === "generator");
-      toggleFieldRequirements(vendorFields, role === "vendor");
-      toggleFieldRequirements(ngoHubFields, role === "ngo-hub");
-
-      if (role !== "ngo-hub") {
-        ngoHubType.value = "";
-        ngoFields.hidden = true;
-        hubFields.hidden = true;
-        toggleFieldRequirements(ngoFields, false);
-        toggleFieldRequirements(hubFields, false);
-      }
-    };
-
-    const updateNgoHubType = () => {
-      const type = ngoHubType.value;
-      const isNgo = type === "NGO";
-      const isHub = type === "Hub";
-      ngoFields.hidden = !isNgo;
-      hubFields.hidden = !isHub;
-      toggleFieldRequirements(ngoFields, isNgo);
-      toggleFieldRequirements(hubFields, isHub);
-    };
-
-    const applyPasswordStrengthUI = (password) => {
-      const result = updatePasswordStrength(password);
-
-      if (passwordStrengthLabel) {
-        passwordStrengthLabel.textContent = result.label;
-        passwordStrengthLabel.className = `strength-label ${result.levelClass}`;
-      }
-
-      if (strengthBar) {
-        strengthBar.className = `strength-bar ${result.levelClass}`;
-        strengthBar.style.width = `${(result.score / 4) * 100}%`;
-      }
-
-      if (ruleUppercase) ruleUppercase.classList.toggle("valid", result.checks.uppercase);
-      if (ruleLowercase) ruleLowercase.classList.toggle("valid", result.checks.lowercase);
-      if (ruleNumber) ruleNumber.classList.toggle("valid", result.checks.number);
-      if (ruleLength) ruleLength.classList.toggle("valid", result.checks.length);
-
-      if (createAccountButton) {
-        createAccountButton.disabled = !result.isStrong;
-      }
-
-      return result;
-    };
-
-    roleCards.forEach((card) => {
-      card.addEventListener("click", () => {
-        const role = card.dataset.role || "";
-        selectedRole.value = role;
-        roleCards.forEach((item) => item.classList.toggle("active", item === card));
-        setRoleVisibility(role);
-        hideMessage(signupMessage);
-      });
-    });
-
-    if (signupPassword) {
-      applyPasswordStrengthUI(signupPassword.value);
-      signupPassword.addEventListener("input", () => {
-        applyPasswordStrengthUI(signupPassword.value);
-      });
-    }
-
-    if (ngoHubType) {
-      ngoHubType.addEventListener("change", updateNgoHubType);
-    }
-
-    signupForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      hideMessage(signupMessage);
-
-      const formData = new FormData(signupForm);
-      const role = String(formData.get("role") || "").trim();
-      const fullName = String(formData.get("full_name") || "").trim();
-      const email = String(formData.get("email") || "").trim();
-      const phone = String(formData.get("phone") || "").trim();
-      const password = String(formData.get("password") || "");
-      const confirmPassword = String(formData.get("confirm_password") || "");
-      const passwordStatus = updatePasswordStrength(password);
-
-      if (!role) {
-        showMessage(signupMessage, "Please select a role to continue.");
-        return;
-      }
-
-      if (!fullName || !email || !phone || !password || !confirmPassword) {
-        showMessage(signupMessage, "Please complete all required fields.");
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showMessage(signupMessage, "Passwords do not match.");
-        return;
-      }
-
-      if (!passwordStatus.isStrong) {
-        showMessage(signupMessage, "Password must be strong before you continue.");
-        return;
-      }
-
-      let subtype = "";
-      let userType = role;
-      const roleData = {};
-
-      if (role === "generator") {
-        subtype = String(formData.get("generator_subtype") || "").trim();
-        if (!subtype) {
-          showMessage(signupMessage, "Please choose a waste generator type.");
-          return;
-        }
-        roleData.generatorSubtype = subtype;
-      }
-
-      if (role === "vendor") {
-        const businessName = String(formData.get("vendor_business_name") || "").trim();
-        const businessType = String(formData.get("vendor_business_type") || "").trim();
-        const location = String(formData.get("vendor_location") || "").trim();
-        const years = String(formData.get("vendor_years") || "").trim();
-
-        if (!businessName || !businessType || !location || !years) {
-          showMessage(signupMessage, "Please complete all vendor details.");
-          return;
-        }
-
-        roleData.businessName = businessName;
-        roleData.businessType = businessType;
-        roleData.location = location;
-        roleData.yearsOfOperation = years;
-      }
-
-      if (role === "ngo-hub") {
-        userType = String(formData.get("ngo_hub_type") || "").trim();
-        if (!userType) {
-          showMessage(signupMessage, "Please select NGO or Hub.");
-          return;
-        }
-
-        subtype = userType;
-
-        if (userType === "NGO") {
-          const ngoName = String(formData.get("ngo_name") || "").trim();
-          const registration = String(formData.get("ngo_registration") || "").trim();
-          const years = String(formData.get("ngo_years") || "").trim();
-          const focus = String(formData.get("ngo_focus") || "").trim();
-          const location = String(formData.get("ngo_location") || "").trim();
-          const mission = String(formData.get("ngo_mission") || "").trim();
-
-          if (!ngoName || !registration || !years || !focus || !location || !mission) {
-            showMessage(signupMessage, "Please complete all NGO details.");
-            return;
-          }
-
-          roleData.organizationName = ngoName;
-          roleData.registrationNumber = registration;
-          roleData.yearsActive = years;
-          roleData.focusArea = focus;
-          roleData.location = location;
-          roleData.missionDescription = mission;
-        }
-
-        if (userType === "Hub") {
-          const hubName = String(formData.get("hub_name") || "").trim();
-          const capacity = String(formData.get("hub_capacity") || "").trim();
-          const location = String(formData.get("hub_location") || "").trim();
-          const availability = String(formData.get("hub_availability") || "").trim();
-          const wasteTypes = String(formData.get("hub_waste_types") || "").trim();
-
-          if (!hubName || !capacity || !location || !availability || !wasteTypes) {
-            showMessage(signupMessage, "Please complete all hub details.");
-            return;
-          }
-
-          roleData.hubName = hubName;
-          roleData.dailyCapacity = capacity;
-          roleData.location = location;
-          roleData.availability = availability;
-          roleData.wasteTypesAccepted = wasteTypes;
-        }
-      }
-
-      const pendingUser = {
-        id: `ECP-${Date.now()}`,
-        fullName,
-        email,
-        phone,
-        password,
-        role,
-        subtype,
-        userType,
-        roleData,
-      };
-
-      localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify(pendingUser));
-      setActiveStep(steps, verificationStep);
-    });
-
-    verificationForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      hideMessage(verificationMessage);
-
-      const code = String(new FormData(verificationForm).get("verification_code") || "").trim();
-
-      if (!code) {
-        showMessage(verificationMessage, "Please enter the verification code.");
-        return;
-      }
-
-      const phrase = generateSecretPhrase();
-      const positions = [...phrase.keys()]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .sort((a, b) => a - b);
-
-      localStorage.setItem(SECRET_PHRASE_KEY, JSON.stringify({ phrase, positions }));
-      renderSecretPhrase(phrase, positions);
-      setActiveStep(steps, walletStep);
-    });
-
-    walletSetupForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      hideMessage(walletMessage);
-
-      const walletData = new FormData(walletSetupForm);
-      const pin = String(walletData.get("wallet_pin") || "").trim();
-      const confirmPin = String(walletData.get("confirm_wallet_pin") || "").trim();
-
-      if (!pin || !confirmPin) {
-        showMessage(walletMessage, "Please enter and confirm your wallet PIN.");
-        return;
-      }
-
-      if (!/^\d{4}$/.test(pin)) {
-        showMessage(walletMessage, "Wallet PIN must be exactly 4 digits.");
-        return;
-      }
-
-      if (pin !== confirmPin) {
-        showMessage(walletMessage, "Wallet PINs do not match.");
-        return;
-      }
-
-      const storedPhraseData = localStorage.getItem(SECRET_PHRASE_KEY);
-      const storedPendingUser = localStorage.getItem(PENDING_SIGNUP_KEY);
-
-      if (!storedPhraseData || !storedPendingUser) {
-        showMessage(walletMessage, "Your signup session expired. Please restart signup.");
-        setActiveStep(steps, signupStep);
-        return;
-      }
-
-      const phraseData = JSON.parse(storedPhraseData);
-      const pendingUser = JSON.parse(storedPendingUser);
-
-      const allWordsCorrect = phraseData.positions.every((position) => {
-        const inputValue = String(walletData.get(`confirm_word_${position}`) || "")
-          .trim()
-          .toLowerCase();
-        return inputValue === phraseData.phrase[position];
-      });
-
-      if (!allWordsCorrect) {
-        showMessage(walletMessage, "Secret phrase confirmation does not match.");
-        return;
-      }
-
-      const referralLink = `ecocyclepay.com/ref?user=${pendingUser.id}`;
-
-      const savedUser = {
-        id: pendingUser.id,
-        fullName: pendingUser.fullName,
-        email: pendingUser.email,
-        phone: pendingUser.phone,
-        password: pendingUser.password,
-        role: pendingUser.role,
-        subtype: pendingUser.subtype,
-        userType: pendingUser.userType,
-        roleData: pendingUser.roleData,
-        wallet: {
-          pin,
-          secretPhrase: phraseData.phrase,
-        },
-        referralLink,
-      };
-
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(savedUser));
-      localStorage.removeItem(PENDING_SIGNUP_KEY);
-      localStorage.removeItem(SECRET_PHRASE_KEY);
-      alert("Account created successfully");
-      window.location.href = redirectByRole(savedUser.role);
-    });
-  }
-
-  const loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    const loginMessage = document.getElementById("loginMessage");
-    const toggleLoginPassword = document.getElementById("toggleLoginPassword");
-    const loginPassword = document.getElementById("loginPassword");
-
-    if (toggleLoginPassword && loginPassword) {
-      toggleLoginPassword.addEventListener("click", () => {
-        const isPassword = loginPassword.type === "password";
-        loginPassword.type = isPassword ? "text" : "password";
-        toggleLoginPassword.textContent = isPassword ? "Hide" : "Show";
-      });
-    }
-
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      hideMessage(loginMessage);
-
-      const formData = new FormData(loginForm);
-      const identifier = String(formData.get("identifier") || "").trim();
-      const password = String(formData.get("password") || "");
-      const user = getStoredUser();
-
-      if (!identifier || !password) {
-        showMessage(loginMessage, "Please enter both login fields.");
-        return;
-      }
-
-      if (!user) {
-        showMessage(loginMessage, "No account found. Please sign up first.");
-        return;
-      }
-
-      const matchesIdentifier = user.email === identifier || user.phone === identifier;
-      const matchesPassword = user.password === password;
-
-      if (!matchesIdentifier || !matchesPassword) {
-        showMessage(loginMessage, "Invalid login details.");
-        return;
-      }
-
-      window.location.href = redirectByRole(user.role);
-    });
-  }
-
-  const dashboardPage = document.getElementById("dashboardPage");
-  const logoutButton = document.getElementById("logoutButton");
-  const dashboardUserName = document.getElementById("dashboardUserName");
-
-  if (dashboardPage) {
-    const user = getStoredUser();
-    const expectedRole = dashboardPage.dataset.dashboardRole || "generator";
-
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (expectedRole !== user.role) {
-      window.location.href = redirectByRole(user.role);
-      return;
-    }
-
-    if (dashboardUserName) {
-      dashboardUserName.textContent = user.fullName || "EcoCycle User";
-    }
-  }
-
-  if (logoutButton) {
-    logoutButton.addEventListener("click", () => {
-      localStorage.removeItem(USER_STORAGE_KEY);
-      localStorage.removeItem(PENDING_SIGNUP_KEY);
-      localStorage.removeItem(SECRET_PHRASE_KEY);
-      window.location.href = "login.html";
-    });
-  }
-
-  const submitPage = document.getElementById("submitPage");
-  if (submitPage) {
-    const user = getStoredUser();
-    const title = document.getElementById("submitActionTitle");
-    const text = document.getElementById("submitActionText");
-    const button = document.getElementById("submitActionButton");
-    const categoryCards = document.querySelectorAll(".category-card");
-
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-
-    categoryCards.forEach((card) => {
-      card.addEventListener("click", () => {
-        categoryCards.forEach((item) => item.classList.remove("active"));
-        card.classList.add("active");
-      });
-    });
-
-    if (user.role === "ngo-hub") {
-      if (title) title.textContent = "View Incoming Waste";
-      if (text) text.textContent = "Review and manage waste requests coming into your network.";
-      if (button) button.textContent = "View Incoming Waste";
-    } else {
-      if (title) title.textContent = "Request Pickup";
-      if (text) text.textContent = "Schedule a pickup for your selected recyclable materials.";
-      if (button) button.textContent = "Request Pickup";
-    }
-  }
-
-  const walletPage = document.getElementById("walletPage");
-  if (walletPage) {
-    const user = getStoredUser();
-    const referralLinkText = document.getElementById("referralLinkText");
-    const copyReferralButton = document.getElementById("copyReferralButton");
-
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (referralLinkText) {
-      referralLinkText.textContent = user.referralLink || "ecocyclepay.com/ref?user=00000";
-    }
-
-    if (copyReferralButton && referralLinkText) {
-      copyReferralButton.addEventListener("click", async () => {
-        const link = referralLinkText.textContent || "";
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(link);
-          }
-          copyReferralButton.textContent = "Copied";
-        } catch {
-          copyReferralButton.textContent = "Copied";
-        }
-      });
-    }
-  }
-});

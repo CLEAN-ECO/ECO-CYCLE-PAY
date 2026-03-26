@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Profile</title>
+    <meta
+        name="description"
+        content="View and edit your EcoCycle Pay profile information."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="profilePage">
+    <main class="utility-page">
+        <section class="utility-shell">
+            <header class="page-header">
+                <a href="dashboard.html" class="back-link">Back</a>
+                <p class="dashboard-kicker">Profile</p>
+                <h1>Your EcoCycle Pay account details</h1>
+                <p class="page-subtitle">Review your signup details and make quick profile updates for the demo.</p>
+            </header>
+
+            <section class="auth-card utility-card">
+                <div class="panel-header">
+                    <h2>Profile Overview</h2>
+                    <p>Your stored signup information appears below.</p>
+                </div>
+
+                <div class="profile-grid" id="profileGrid"></div>
+                <div class="empty-state" id="profileEmptyState" hidden>
+                    <h3>Profile not available</h3>
+                    <p>Please sign in to view your account details.</p>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

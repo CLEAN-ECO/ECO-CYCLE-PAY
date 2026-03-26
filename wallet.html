@@ -6,7 +6,7 @@
     <title>EcoCycle Pay | Wallet</title>
     <meta
         name="description"
-        content="View your EcoCycle Pay wallet balance, referral link, and recent transactions."
+        content="Manage wallet balance, withdrawals, and referral rewards in EcoCycle Pay."
     >
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,28 +22,70 @@
             <header class="page-header">
                 <a href="dashboard.html" class="back-link">Back</a>
                 <p class="dashboard-kicker">Wallet</p>
-                <h1>Manage your EcoCycle Pay balance</h1>
-                <p class="page-subtitle">Withdraw earnings, track transactions, and share your referral link.</p>
+                <h1>Your earnings, referrals, and withdrawals</h1>
+                <p class="page-subtitle">Withdraw safely with your wallet PIN and keep track of recent transactions.</p>
             </header>
 
             <section class="wallet-balance-card wallet-balance-card-large">
                 <div class="wallet-copy">
                     <p class="wallet-label">Available Balance</p>
-                    <h2 id="walletBalanceAmount">₦ 24,500.00</h2>
-                    <p class="wallet-meta">Wallet ID: ECP-2048-8892</p>
+                    <h2 id="walletBalanceAmount">₦2,500</h2>
+                    <p class="wallet-meta">Wallet ID: <span id="walletIdMask">ECP-****-1024</span></p>
                 </div>
                 <div class="wallet-trend">
-                    <a href="#" class="btn btn-light">Withdraw</a>
+                    <span class="trend-badge">Live Wallet</span>
+                    <p>Powered by Interswitch</p>
                 </div>
             </section>
 
             <section class="referral-card">
                 <div>
                     <p class="dashboard-kicker">Referral Link</p>
-                    <h2>Invite others and earn together</h2>
+                    <h2>Share EcoCycle Pay</h2>
                     <p id="referralLinkText">ecocyclepay.com/ref?user=00000</p>
+                    <small id="referralCountText">0 referrals</small>
                 </div>
                 <button type="button" class="btn btn-primary" id="copyReferralButton">Copy Link</button>
+            </section>
+
+            <section class="auth-card utility-card">
+                <div class="panel-header">
+                    <h2>Withdraw Funds</h2>
+                    <p>Enter your payout details and confirm with your wallet PIN.</p>
+                </div>
+
+                <form id="withdrawForm" class="auth-form" novalidate>
+                    <div class="form-grid">
+                        <label class="field">
+                            <span>Account Name</span>
+                            <input type="text" name="account_name" placeholder="Enter account name" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Bank Name</span>
+                            <input type="text" name="bank_name" placeholder="Enter bank name" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Account Number</span>
+                            <input type="text" name="account_number" placeholder="Enter account number" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Amount</span>
+                            <input type="number" name="amount" min="1" placeholder="Enter amount" required>
+                        </label>
+
+                        <label class="field field-full">
+                            <span>Wallet PIN</span>
+                            <input type="password" name="wallet_pin" maxlength="4" inputmode="numeric" placeholder="Enter 4-digit wallet PIN" required>
+                        </label>
+                    </div>
+
+                    <p class="wallet-powered">Powered by Interswitch</p>
+                    <p class="form-message" id="withdrawMessage" hidden></p>
+                    <button type="submit" class="btn btn-primary form-submit" id="withdrawSubmitButton">Withdraw</button>
+                </form>
             </section>
 
             <section class="activity-section">
@@ -52,28 +94,10 @@
                     <h2>Recent Wallet Activity</h2>
                 </div>
 
-                <div class="transaction-list">
-                    <article class="transaction-item">
-                        <div>
-                            <h3>₦ 3,500.00</h3>
-                            <p>Withdrawal</p>
-                        </div>
-                        <span>Mar 24, 2026</span>
-                    </article>
-                    <article class="transaction-item">
-                        <div>
-                            <h3>₦ 2,200.00</h3>
-                            <p>Recycling payout</p>
-                        </div>
-                        <span>Mar 22, 2026</span>
-                    </article>
-                    <article class="transaction-item">
-                        <div>
-                            <h3>₦ 1,150.00</h3>
-                            <p>Referral bonus</p>
-                        </div>
-                        <span>Mar 19, 2026</span>
-                    </article>
+                <div class="transaction-list" id="walletTransactionList"></div>
+                <div class="empty-state" id="walletEmptyState" hidden>
+                    <h3>No transactions yet</h3>
+                    <p>Your wallet history will appear here.</p>
                 </div>
             </section>
         </section>
