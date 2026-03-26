@@ -1,4 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const options = {
     definition: {
@@ -14,8 +17,8 @@ const options = {
         },
         servers: [
             {
-                url: process.env.API_URL || "http://localhost:5000",
-                description: "Development Server",
+                url: process.env.API_URL as string,
+                description: "Server",
             },
         ],
         components: {
@@ -28,7 +31,7 @@ const options = {
             },
         },
     },
-    apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+    apis: ["./src/routes/*.ts", "./src/controllers/*.ts", "./src/models/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
