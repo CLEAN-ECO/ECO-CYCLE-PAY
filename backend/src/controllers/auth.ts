@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { validationResult } from "express-validator";
+import { Types } from "mongoose";
 import User from "../models/user";
+import Wallet from "../models/wallet";
+import Referral from "../models/referral";
 import { logger } from "../utils/logger";
 import {
     sendSuccess,
@@ -99,6 +102,7 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
             password,
             confirm_password,
             role,
+            referral_code,
             generator_subtype,
             vendor_business_name,
             vendor_business_type,
@@ -129,6 +133,21 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
             return sendConflict(res, "Email already registered");
         }
 
+        // Validate referral code if provided
+        let referredById: string | undefined;
+        if (referral_code) {
+            const referralDoc = await Referral.findOne({
+                referral_code: (referral_code as string).toUpperCase(),
+                is_active: true,
+            });
+
+            if (!referralDoc) {
+                return sendBadRequest(res, "Invalid or inactive referral code");
+            }
+
+            referredById = referralDoc.user.toString();
+        }
+
         // Hash password
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await bcryptjs.hash(password as string, salt);
@@ -141,6 +160,7 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
             password: hashedPassword,
             role,
             email_verified: false,
+            ...(referredById && { referred_by: new Types.ObjectId(referredById) }),
         };
 
         // Add role-specific fields
@@ -233,6 +253,49 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
         await user.save();
 
         logger(`User verified: ${email}`, "info");
+
+        // Create wallet for user
+        const wallet = new Wallet({
+            user: user._id,
+            balance: 0,
+            total_earned: 0,
+            total_withdrawn: 0,
+        });
+        await wallet.save();
+
+        // Generate unique referral code
+        const referralCode = `ref${user._id.toString().slice(-12).toUpperCase()}`;
+        const referralLink = `${process.env.FRONTEND_URL || "https://ecocyclepay.com"}/signup?ref=${referralCode}`;
+
+        // Create referral for user
+        const referral = new Referral({
+            user: user._id,
+            referral_code: referralCode,
+            referral_link: referralLink,
+            bonus_amount: 500,
+        });
+        await referral.save();
+
+        // Apply referral bonus if user was referred
+        if (user.referred_by) {
+            const referrerWallet = await Wallet.findOne({ user: user.referred_by });
+            if (referrerWallet) {
+                referrerWallet.balance += 500;
+                referrerWallet.total_earned += 500;
+                referrerWallet.last_transaction_date = new Date();
+                await referrerWallet.save();
+
+                // Update referrer's referral stats
+                await Referral.updateOne(
+                    { user: user.referred_by },
+                    {
+                        $inc: { successful_referrals: 1, total_earnings: 500 },
+                    },
+                );
+
+                logger(`Referral bonus applied: ${user.referred_by} -> ${user._id}`, "info");
+            }
+        }
 
         // Generate temporary token for wallet setup
         const tempToken = jwt.sign(

@@ -136,6 +136,7 @@ interface IUserCommon extends Document {
     password: string;
     role: UserRole;
     email_verified: boolean;
+    referred_by?: Schema.Types.ObjectId; // User who referred this user
     wallet_pin?: string; // Hashed PIN
     secret_phrase?: string[]; // Recovery phrase words
     created_at: Date;
@@ -218,6 +219,10 @@ const userSchema = new Schema<IUser>(
         email_verified: {
             type: Boolean,
             default: false,
+        },
+        referred_by: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
         },
         wallet_pin: {
             type: String,

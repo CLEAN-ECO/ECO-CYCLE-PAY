@@ -2,7 +2,7 @@ import { body, ValidationChain } from "express-validator";
 
 /**
  * Validation middleware for user signup (Step 1)
- * Validates: full_name, email, phone, password, confirm_password, role
+ * Validates: full_name, email, phone, password, confirm_password, role, referral_code (optional)
  */
 export const validateSignup = (): ValidationChain[] => [
     body("full_name")
@@ -20,6 +20,11 @@ export const validateSignup = (): ValidationChain[] => [
         .withMessage("Password must contain uppercase, lowercase, and number"),
     body("confirm_password").notEmpty().withMessage("Confirm password is required"),
     body("role").isIn(["generator", "vendor", "ngo-hub"]).withMessage("Invalid role"),
+    body("referral_code")
+        .optional()
+        .isString()
+        .trim()
+        .withMessage("Referral code must be a string"),
 ];
 
 /**
