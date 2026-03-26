@@ -1,88 +1,675 @@
-const KEYS={user:'eco_user',pending:'eco_pending_signup',phrase:'eco_pending_phrase',pickups:'eco_pickups',uploads:'eco_uploads',tx:'eco_transactions',flash:'eco_flash_message',theme:'eco_theme'};
-const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const user=()=>load(KEYS.user,null), pickups=()=>load(KEYS.pickups,[]), uploads=()=>load(KEYS.uploads,[]), txs=()=>load(KEYS.tx,[]);
-const fmtMoney=n=>new Intl.NumberFormat('en-NG',{style:'currency',currency:'NGN',maximumFractionDigits:0}).format(Number(n||0));
-const fmtDate=d=>new Date(d).toLocaleDateString('en-NG',{month:'short',day:'numeric',year:'numeric'});
-const rid=()=>`ECP-${Date.now()}`;
-const goRole=r=>r==='vendor'?'dashboard-vendor.html':r==='ngo-hub'?'dashboard-ngo.html':'dashboard.html';
-const flash=m=>localStorage.setItem(KEYS.flash,m);
-const takeFlash=()=>{const m=localStorage.getItem(KEYS.flash);if(m)localStorage.removeItem(KEYS.flash);return m};
-const msg=(el,t='')=>{if(!el)return;el.textContent=t;el.hidden=!t};
-const loading=(btn,on,text='Processing...')=>{if(!btn)return;if(!btn.dataset.t)btn.dataset.t=btn.textContent;btn.disabled=on;btn.textContent=on?text:btn.dataset.t};
-const setStep=(steps,cur)=>steps.forEach(s=>{if(!s)return;s.hidden=s!==cur;s.classList.toggle('active',s===cur)});
-const mask=id=>`ECP-****-${String(id||'1024').slice(-4)}`;
-const strength=p=>{const c={u:/[A-Z]/.test(p),l:/[a-z]/.test(p),n:/\d/.test(p),x:p.length>=8},s=Object.values(c).filter(Boolean).length;return{c,s,label:s===4?'Strong':s>=2?'Medium':'Weak',cls:s===4?'strong':s>=2?'medium':'weak',ok:s===4}};
-const phrase=()=>{const w='green wallet planet plastic future bottle reward pickup forest impact carbon energy clean market supply vendor earth solar river paper metal cycle secure profit growth hub mission nature points value'.split(' '),o=[];while(o.length<12){const x=w[Math.floor(Math.random()*w.length)];if(!o.includes(x))o.push(x)}return o};
-const renderPhrase=(arr,pos)=>{const g=$('#secretPhraseGrid'), c=$('#confirmWordsGrid'); if(!g||!c)return; g.innerHTML=arr.map((w,i)=>`<div class="phrase-word"><span>${i+1}</span><strong>${w}</strong></div>`).join(''); c.innerHTML=pos.map(i=>`<label class="field"><span>Confirm word #${i+1}</span><input type="text" name="confirm_word_${i}" required></label>`).join('')};
-const ensureDemo=u=>{if(!u)return;const ps=pickups(),us=uploads(),ts=txs(); if(!u.wallet)u.wallet={}; if(typeof u.wallet.balance!=='number')u.wallet.balance=2500; if(typeof u.referralCount!=='number')u.referralCount=0; if(!u.referralLink)u.referralLink=`ecocyclepay.com/ref?user=${u.id}`; save(KEYS.user,u);
- if(!ps.some(x=>x.userId===u.id)) save(KEYS.pickups,[...ps,{id:`p-${u.id}-1`,userId:u.id,role:u.role,wasteType:'Plastics',quantity:5,location:'Yaba, Lagos',pickupTime:new Date().toISOString(),notes:'Front gate',status:'Pending',createdAt:new Date().toISOString()},{id:`p-${u.id}-2`,userId:u.id,role:u.role,wasteType:'Papers',quantity:4,location:'Ikeja, Lagos',pickupTime:new Date().toISOString(),notes:'',status:'Accepted',createdAt:new Date(Date.now()-86400000).toISOString()},{id:`p-${u.id}-3`,userId:u.id,role:u.role,wasteType:'Beverage Cans',quantity:3,location:'Lekki, Lagos',pickupTime:new Date().toISOString(),notes:'',status:'Completed',createdAt:new Date(Date.now()-172800000).toISOString()}]);
- if(!us.some(x=>x.userId===u.id)) save(KEYS.uploads,[...us,{id:`u-${u.id}-1`,userId:u.id,role:u.role,wasteType:'Plastics',quantity:12,location:'Surulere, Lagos',imageName:'',createdAt:new Date(Date.now()-43200000).toISOString()}]);
- if(!ts.some(x=>x.userId===u.id)) save(KEYS.tx,[...ts,{id:`t-${u.id}-1`,userId:u.id,type:'Recycling payout',amount:2500,status:'Completed',createdAt:new Date(Date.now()-86400000).toISOString()},{id:`t-${u.id}-2`,userId:u.id,type:'Referral bonus',amount:500,status:'Completed',createdAt:new Date(Date.now()-172800000).toISOString()}]);
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+const SESSION = {
+  token: 'eco_auth_token',
+  theme: 'eco_theme',
+  pendingId: 'eco_pending_signup_id',
+  phrase: 'eco_pending_phrase_data'
 };
-const allActs=u=>{const a=[...uploads().filter(x=>x.userId===u.id).map(x=>({t:`Uploaded ${x.quantity}kg ${x.wasteType}`,d:`Uploaded from ${x.location}`,dt:x.createdAt})),...pickups().filter(x=>x.userId===u.id).map(x=>({t:`Pickup request for ${x.wasteType}`,d:`${x.quantity}kg from ${x.location}`,dt:x.createdAt})),...txs().filter(x=>x.userId===u.id).map(x=>({t:x.type,d:`${fmtMoney(x.amount)} � ${x.status}`,dt:x.createdAt}))]; return a.sort((a,b)=>new Date(b.dt)-new Date(a.dt))};
-const applyTheme=t=>{const next=t==='dark'?'dark':'light';document.body.classList.toggle('dark',next==='dark'); const btn=$('#theme-toggle')||$('#darkModeToggle'); if(btn){btn.setAttribute('aria-pressed',String(next==='dark'));btn.textContent=next==='dark'?'Light Mode':'Dark Mode'} localStorage.setItem('eco_theme',next)};
-applyTheme(localStorage.getItem('eco_theme')||'light');
-const themeBtn=$('#theme-toggle')||$('#darkModeToggle'); if(themeBtn)themeBtn.addEventListener('click',()=>applyTheme(document.body.classList.contains('dark')?'light':'dark'));
-const slides=$$('.slide');
-if(slides.length){
- let i=0;
- const showSlide=index=>slides.forEach((slide,slideIndex)=>slide.classList.toggle('active',slideIndex===index));
- showSlide(0);
- setInterval(()=>{
-  i=(i+1)%slides.length;
-  showSlide(i);
- },5000);
-}
-const logout=$('#logoutButton'); if(logout)logout.addEventListener('click',()=>{[KEYS.user,KEYS.pending,KEYS.phrase].forEach(k=>localStorage.removeItem(k)); location.href='login.html';});
 
-const signupForm=$('#signupForm'), verifyForm=$('#verificationForm'), walletForm=$('#walletSetupForm');
-if(signupForm&&verifyForm&&walletForm){
- const steps=[$('#signupStep'),$('#verificationStep'),$('#walletStep')], roleInput=$('#selectedRole'), roleTitle=$('#selectedRoleTitle'), details=$('#signupDetailsPanel'), formContainer=$('#signupFormContainer'), roleSelection=$('#roleSelection'), roleGrid=$('#roleCardGrid'), ngoType=$('#ngoHubType'), createBtn=$('#createAccountButton');
- const roles={generator:'Waste Generator',vendor:'Vendor','ngo-hub':'NGO / Hub'}; const gen=$('#generatorFields'), ven=$('#vendorFields'), ngoHub=$('#ngoHubFields'), ngo=$('#ngoFields'), hub=$('#hubFields');
- const signupMsg=$('#signupMessage'), verMsg=$('#verificationMessage'), wallMsg=$('#walletMessage');
- const pwd=$('#signupPassword'), cpwd=$('#confirmSignupPassword'), tp=$('#toggleSignupPassword'), tcp=$('#toggleConfirmSignupPassword');
- const showPwd=(i,b)=>{if(!i||!b)return; b.addEventListener('click',()=>{const p=i.type==='password';i.type=p?'text':'password';b.textContent=p?'Hide':'Show'})}; showPwd(pwd,tp); showPwd(cpwd,tcp);
- const req=(wrap,on)=>wrap?$$('input,select,textarea',wrap).forEach(i=>i.required=on):null;
- const toggleWrap=(wrap,on,display='block')=>{if(!wrap)return; wrap.hidden=!on; if(on){wrap.removeAttribute('hidden'); wrap.style.display=display;} else {wrap.setAttribute('hidden','hidden'); wrap.style.display='none';}};
- const syncCreateButton=()=>{if(createBtn)createBtn.disabled=!(roleInput.value&&syncStrength().ok)};
- const setRole=r=>{roleInput.value=r; $$('.role-card').forEach(c=>c.classList.toggle('active',c.dataset.role===r)); if(details){details.hidden=!r; if(r)details.removeAttribute('hidden');} if(roleSelection){if(r){roleSelection.setAttribute('hidden','hidden'); roleSelection.style.display='none';}else{roleSelection.removeAttribute('hidden'); roleSelection.style.display='block';}} if(formContainer){if(r){formContainer.hidden=false; formContainer.removeAttribute('hidden'); formContainer.style.display='block'; formContainer.style.opacity='1'; formContainer.style.visibility='visible'; formContainer.animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:280,easing:'ease-out'}); setTimeout(()=>formContainer.scrollIntoView({behavior:'smooth',block:'start'}),40);}else{formContainer.hidden=true; formContainer.setAttribute('hidden','hidden'); formContainer.style.display='none';}} if(roleTitle)roleTitle.textContent=roles[r]||'Selected Role'; toggleWrap(gen,r==='generator','block'); toggleWrap(ven,r==='vendor','block'); toggleWrap(ngoHub,r==='ngo-hub','block'); req(gen,r==='generator'); req(ven,r==='vendor'); req(ngoHub,r==='ngo-hub'); if(r!=='ngo-hub'&&ngoType){ngoType.value=''; toggleWrap(ngo,false,'block'); toggleWrap(hub,false,'block'); req(ngo,false); req(hub,false);} localStorage.setItem('selectedRole',r||''); msg(signupMsg,''); syncCreateButton()};
- if(formContainer){formContainer.hidden=true; formContainer.setAttribute('hidden','hidden'); formContainer.style.display='none';}
- if(details)details.hidden=true;
- if(roleSelection){roleSelection.hidden=false; roleSelection.removeAttribute('hidden'); roleSelection.style.display='block';}
- if(createBtn)createBtn.disabled=true;
- if(roleGrid){roleGrid.addEventListener('click',e=>{const card=e.target.closest('.role-card'); if(!card)return; setRole(card.dataset.role||'');});}
- $('#changeRoleButton')?.addEventListener('click',()=>{setRole(''); if(roleSelection)roleSelection.scrollIntoView({behavior:'smooth',block:'start'})});
- ngoType?.addEventListener('change',()=>{const t=ngoType.value; toggleWrap(ngo,t==='NGO','block'); toggleWrap(hub,t==='Hub','block'); req(ngo,t==='NGO'); req(hub,t==='Hub');});
- const syncStrength=()=>{const r=strength(pwd?.value||''); const l=$('#passwordStrengthLabel'), bar=$('#strengthBar'); if(l){l.textContent=r.label;l.className=`strength-label ${r.cls}`;l.style.color=r.label==='Strong'?'green':r.label==='Medium'?'orange':'red'} if(bar){bar.className=`strength-bar ${r.cls}`;bar.style.width=`${r.s/4*100}%`} [['#ruleUppercase',r.c.u],['#ruleLowercase',r.c.l],['#ruleNumber',r.c.n],['#ruleLength',r.c.x]].forEach(([s,v])=>$(s)?.classList.toggle('valid',v)); return r;}; pwd?.addEventListener('input',syncStrength); syncStrength(); syncCreateButton();
- const preset=new URLSearchParams(location.search).get('role'); if(preset)setRole(preset); else setRole('');
- signupForm.addEventListener('submit',e=>{e.preventDefault(); msg(signupMsg,''); const fd=new FormData(signupForm), role=String(fd.get('role')||'').trim(), fullName=String(fd.get('full_name')||'').trim(), email=String(fd.get('email')||'').trim(), phone=String(fd.get('phone')||'').trim(), password=String(fd.get('password')||''), confirmPassword=String(fd.get('confirm_password')||'');
-  if(!role) return msg(signupMsg,'Please select a role to continue.');
-  if(!fullName||!email||!phone||!password||!confirmPassword) return msg(signupMsg,'Please complete all required fields.');
-  if(password!==confirmPassword) return msg(signupMsg,'Passwords do not match.');
-  if(!syncStrength().ok) return msg(signupMsg,'Password must be strong before you continue.');
-  if(!fd.get('terms_consent')||!fd.get('privacy_consent')) return msg(signupMsg,'Please accept the terms and privacy policy.');
-  let subtype='', userType=role, roleData={};
-  if(role==='generator'){subtype=String(fd.get('generator_subtype')||'').trim(); if(!subtype)return msg(signupMsg,'Please choose a waste generator type.'); userType=subtype; roleData.generatorSubtype=subtype;}
-  if(role==='vendor'){const businessName=String(fd.get('vendor_business_name')||'').trim(), businessType=String(fd.get('vendor_business_type')||'').trim(), location=String(fd.get('vendor_location')||'').trim(), years=String(fd.get('vendor_years')||'').trim(), registration=String(fd.get('vendor_registration')||'').trim(); if(!businessName||!businessType||!location||!years||!registration)return msg(signupMsg,'Please complete all vendor details.'); subtype=businessType; userType=businessType; roleData={businessName,businessType,location,yearsOfOperation:years,registrationNumber:registration};}
-  if(role==='ngo-hub'){userType=String(fd.get('ngo_hub_type')||'').trim(); subtype=userType; if(!userType)return msg(signupMsg,'Please select NGO or Community Hub.'); if(userType==='NGO'){const ngo_name=String(fd.get('ngo_name')||'').trim(), ngo_registration=String(fd.get('ngo_registration')||'').trim(), ngo_years=String(fd.get('ngo_years')||'').trim(), ngo_focus=String(fd.get('ngo_focus')||'').trim(), ngo_location=String(fd.get('ngo_location')||'').trim(), ngo_mission=String(fd.get('ngo_mission')||'').trim(); if(!ngo_name||!ngo_registration||!ngo_years||!ngo_focus||!ngo_location||!ngo_mission)return msg(signupMsg,'Please complete all NGO details.'); roleData={organizationName:ngo_name,registrationNumber:ngo_registration,yearsActive:ngo_years,focusArea:ngo_focus,location:ngo_location,missionDescription:ngo_mission};} if(userType==='Hub'){const hub_name=String(fd.get('hub_name')||'').trim(), hub_registration=String(fd.get('hub_registration')||'').trim(), hub_location=String(fd.get('hub_location')||'').trim(), hub_availability=String(fd.get('hub_availability')||'').trim(), hub_capacity=String(fd.get('hub_capacity')||'').trim(), hub_waste_types=String(fd.get('hub_waste_types')||'').trim(); if(!hub_name||!hub_registration||!hub_location||!hub_availability||!hub_capacity||!hub_waste_types)return msg(signupMsg,'Please complete all hub details.'); roleData={hubName:hub_name,registrationNumber:hub_registration,location:hub_location,availability:hub_availability,dailyCapacity:hub_capacity,wasteTypesAccepted:hub_waste_types};}}
-  save(KEYS.pending,{id:rid(),fullName,email,phone,password,role,subtype,userType,referralCode:String(fd.get('referral_code')||'').trim(),roleData}); msg(verMsg,'Check your email for verification code.'); setStep(steps,$('#verificationStep')); });
- verifyForm.addEventListener('submit',e=>{e.preventDefault(); const code=String(new FormData(verifyForm).get('verification_code')||'').trim(); if(!code)return msg(verMsg,'Please enter the verification code.'); const arr=phrase(), pos=[...arr.keys()].sort(()=>Math.random()-.5).slice(0,3).sort((a,b)=>a-b); save(KEYS.phrase,{arr,pos}); renderPhrase(arr,pos); setStep(steps,$('#walletStep'));});
- walletForm.addEventListener('submit',e=>{e.preventDefault(); msg(wallMsg,''); const fd=new FormData(walletForm), pin=String(fd.get('wallet_pin')||'').trim(), cpin=String(fd.get('confirm_wallet_pin')||'').trim(), p=load(KEYS.phrase,null), pu=load(KEYS.pending,null); if(!pin||!cpin)return msg(wallMsg,'Please enter and confirm your wallet PIN.'); if(!/^\d{4}$/.test(pin))return msg(wallMsg,'Wallet PIN must be exactly 4 digits.'); if(pin!==cpin)return msg(wallMsg,'Wallet PINs do not match.'); if(!p||!pu)return msg(wallMsg,'Your signup session expired. Please start again.'); const ok=p.pos.every(i=>String(fd.get(`confirm_word_${i}`)||'').trim().toLowerCase()===p.arr[i]); if(!ok)return msg(wallMsg,'Secret phrase confirmation does not match.'); const u={...pu,wallet:{pin,balance:2500,secretPhrase:p.arr},referralLink:`ecocyclepay.com/ref?user=${pu.id}`,referralCount:0}; save(KEYS.user,u); localStorage.removeItem(KEYS.pending); localStorage.removeItem(KEYS.phrase); ensureDemo(u); flash('Account created successfully'); location.href=goRole(u.role);});
-}
+const state = {
+  me: null,
+  appData: null
+};
 
-const loginForm=$('#loginForm'); if(loginForm){const m=$('#loginMessage'), p=$('#loginPassword'), t=$('#toggleLoginPassword'); t?.addEventListener('click',()=>{const k=p.type==='password';p.type=k?'text':'password';t.textContent=k?'Hide':'Show'}); loginForm.addEventListener('submit',e=>{e.preventDefault(); msg(m,''); const fd=new FormData(loginForm), id=String(fd.get('identifier')||'').trim(), pw=String(fd.get('password')||''), u=user(); if(!id||!pw)return msg(m,'Please enter both login fields.'); if(!u)return msg(m,'No account found. Please sign up first.'); if(!([u.email,u.phone].includes(id))||u.password!==pw)return msg(m,'Invalid login details.'); location.href=goRole(u.role);});}
+const token = () => localStorage.getItem(SESSION.token) || '';
+const setToken = value => value ? localStorage.setItem(SESSION.token, value) : localStorage.removeItem(SESSION.token);
+const setTheme = value => localStorage.setItem(SESSION.theme, value);
+const getTheme = () => localStorage.getItem(SESSION.theme) || 'light';
 
-const dp=$('#dashboardPage'); if(dp){const u=user(); if(!u){location.href='login.html';} if((dp.dataset.dashboardRole||'generator')!==u.role){location.href=goRole(u.role);} ensureDemo(u); const f=takeFlash(); if(f)msg($('#dashboardFeedback'),f); const ps=pickups().filter(x=>x.userId===u.id), us=uploads().filter(x=>x.userId===u.id), ts=txs().filter(x=>x.userId===u.id), waste=us.reduce((a,b)=>a+Number(b.quantity||0),0), points=waste*20+ps.length*10, co2=Math.round(waste*2.3); $('#dashboardUserName')&&($('#dashboardUserName').textContent=u.fullName||'EcoCycle User'); $('#dashboardBalance')&&($('#dashboardBalance').textContent=fmtMoney(u.wallet?.balance||2500)); $('#dashboardWaste')&&($('#dashboardWaste').textContent=`${waste||12}kg`); $('#dashboardPoints')&&($('#dashboardPoints').textContent=`${points||320}`); $('#dashboardCo2')&&($('#dashboardCo2').textContent=`${co2||28}kg`); $('#walletHeading')&&($('#walletHeading').textContent=fmtMoney(u.wallet?.balance||2500)); $('#walletIdMask')&&($('#walletIdMask').textContent=mask(u.id)); $('#pickupCountBadge')&&($('#pickupCountBadge').textContent=`${ps.length||3} Pickups`);
- const acts=allActs(u).slice(0,5), al=$('#recentActivityList'), ae=$('#activityEmptyState'); if(al){if(!acts.length){al.innerHTML=''; if(ae)ae.hidden=false;} else {if(ae)ae.hidden=true; al.innerHTML=acts.map(a=>`<article class="activity-item"><div><h3>${a.t}</h3><p>${a.d}</p></div><span>${fmtDate(a.dt)}</span></article>`).join('')}}
- const pl=$('#pickupStatusList'), pe=$('#pickupEmptyState'); if(pl){if(!ps.length){pl.innerHTML=''; if(pe)pe.hidden=false;} else {if(pe)pe.hidden=true; pl.innerHTML=ps.slice().reverse().map(p=>`<article class="status-card"><div><h3>${p.wasteType} � ${p.quantity}kg</h3><p>${p.location}</p></div><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></article>`).join('')}} }
+const fmtMoney = n => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(n || 0));
+const fmtDate = d => new Date(d).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' });
+const titleCase = s => String(s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const goRole = role => role === 'vendor' ? 'dashboard-vendor.html' : role === 'ngo-hub' ? 'dashboard-ngo.html' : 'dashboard.html';
+const mask = id => `ECP-****-${String(id || '1024').slice(-4)}`;
+const strength = p => {
+  const c = { u: /[A-Z]/.test(p), l: /[a-z]/.test(p), n: /\d/.test(p), x: p.length >= 8 };
+  const s = Object.values(c).filter(Boolean).length;
+  return { c, s, label: s === 4 ? 'Strong' : s >= 2 ? 'Medium' : 'Weak', cls: s === 4 ? 'strong' : s >= 2 ? 'medium' : 'weak', ok: s === 4 };
+};
 
-const pickupForm=$('#pickupForm'); if(pickupForm){const u=user(); if(!u){location.href='login.html';} $('input[name="pickup_time"]',pickupForm)?.setAttribute('min',new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)); pickupForm.addEventListener('submit',e=>{e.preventDefault(); const m=$('#pickupMessage'), b=$('#pickupSubmitButton'), fd=new FormData(pickupForm), wasteType=String(fd.get('waste_type')||'').trim(), quantity=String(fd.get('quantity')||'').trim(), locationTxt=String(fd.get('location')||'').trim(), pickupTime=String(fd.get('pickup_time')||'').trim(); if(!wasteType||!quantity||!locationTxt||!pickupTime)return msg(m,'Please complete all required pickup fields.'); loading(b,true); setTimeout(()=>{save(KEYS.pickups,[...pickups(),{id:`pickup-${Date.now()}`,userId:u.id,role:u.role,wasteType,quantity:Number(quantity),location:locationTxt,pickupTime,notes:String(fd.get('notes')||'').trim(),status:'Pending',createdAt:new Date().toISOString()}]); loading(b,false); msg(m,'Pickup request sent'); flash('Pickup request sent'); pickupForm.reset();},900);});}
+const msg = (el, text = '') => {
+  if (!el) return;
+  el.textContent = text;
+  el.hidden = !text;
+};
 
-const uploadForm=$('#uploadForm'); if(uploadForm){const u=user(); if(!u){location.href='login.html';} uploadForm.addEventListener('submit',e=>{e.preventDefault(); const m=$('#uploadMessage'), b=$('#uploadSubmitButton'), fd=new FormData(uploadForm), wasteType=String(fd.get('waste_type')||'').trim(), quantity=String(fd.get('quantity')||'').trim(), locationTxt=String(fd.get('location')||'').trim(); if(!wasteType||!quantity||!locationTxt)return msg(m,'Please complete all required upload fields.'); loading(b,true); setTimeout(()=>{const file=$('input[name="waste_image"]',uploadForm)?.files?.[0]; save(KEYS.uploads,[...uploads(),{id:`upload-${Date.now()}`,userId:u.id,role:u.role,wasteType,quantity:Number(quantity),location:locationTxt,imageName:file?file.name:'',createdAt:new Date().toISOString()}]); loading(b,false); msg(m,'Waste uploaded'); flash('Waste uploaded'); uploadForm.reset();},900);});}
+const loading = (btn, on, text = 'Please wait...') => {
+  if (!btn) return;
+  if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+  btn.disabled = on;
+  btn.textContent = on ? text : btn.dataset.originalText;
+};
 
-const wp=$('#walletPage'); if(wp){const u=user(); if(!u){location.href='login.html';} ensureDemo(u); $('#walletBalanceAmount')&&($('#walletBalanceAmount').textContent=fmtMoney(u.wallet?.balance||2500)); $('#walletIdMask')&&($('#walletIdMask').textContent=mask(u.id)); $('#referralLinkText')&&($('#referralLinkText').textContent=u.referralLink||'ecocyclepay.com/ref?user=00000'); $('#referralCountText')&&($('#referralCountText').textContent=`${u.referralCount||0} referrals`); const renderTx=()=>{const list=$('#walletTransactionList'), empty=$('#walletEmptyState'), arr=txs().filter(x=>x.userId===u.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); if(!list)return; if(!arr.length){list.innerHTML=''; if(empty)empty.hidden=false; return;} if(empty)empty.hidden=true; list.innerHTML=arr.map(t=>`<article class="transaction-item"><div><h3>${fmtMoney(t.amount)}</h3><p>${t.type} � ${t.status}</p></div><span>${fmtDate(t.createdAt)}</span></article>`).join('')}; renderTx(); $('#copyReferralButton')?.addEventListener('click',async()=>{const link=$('#referralLinkText')?.textContent||''; try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(link);}finally{$('#copyReferralButton').textContent='Copied';}}); $('#withdrawForm')?.addEventListener('submit',e=>{e.preventDefault(); const m=$('#withdrawMessage'), b=$('#withdrawSubmitButton'), fd=new FormData($('#withdrawForm')), account_name=String(fd.get('account_name')||'').trim(), bank_name=String(fd.get('bank_name')||'').trim(), account_number=String(fd.get('account_number')||'').trim(), amount=Number(fd.get('amount')||0), pin=String(fd.get('wallet_pin')||'').trim(); if(!account_name||!bank_name||!account_number||!amount||!pin)return msg(m,'Please complete all withdrawal fields.'); if(pin!==String(u.wallet?.pin||''))return msg(m,'Wallet PIN is incorrect.'); if(amount>Number(u.wallet?.balance||0))return msg(m,'Insufficient wallet balance.'); loading(b,true); setTimeout(()=>{u.wallet.balance=Number(u.wallet.balance||0)-amount; save(KEYS.user,u); save(KEYS.tx,[{id:`txn-${Date.now()}`,userId:u.id,type:'Withdrawal',amount,status:'Processing',createdAt:new Date().toISOString()},...txs()]); $('#walletBalanceAmount')&&($('#walletBalanceAmount').textContent=fmtMoney(u.wallet.balance)); loading(b,false); msg(m,'Withdrawal processing'); flash('Withdrawal processing'); $('#withdrawForm').reset(); renderTx();},1000);});}
+const loader = {
+  show(text = 'Loading, please wait...') {
+    let el = $('#pageLoaderBar');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pageLoaderBar';
+      el.className = 'page-loader-bar';
+      document.body.prepend(el);
+    }
+    el.textContent = text;
+    el.hidden = false;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.hide(), 2200);
+    return text;
+  },
+  hide() {
+    const el = $('#pageLoaderBar');
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    if (el) el.hidden = true;
+    return null;
+  },
+  timer: null
+};
 
-const pp=$('#profilePage'); if(pp){const u=user(), g=$('#profileGrid'), e=$('#profileEmptyState'); if(!u){if(e)e.hidden=false;} else if(g){const items=[['Full Name',u.fullName],['Email',u.email],['Phone Number',u.phone],['Role',u.role],['Subtype',u.userType||u.subtype],['Referral Link',u.referralLink]]; Object.entries(u.roleData||{}).forEach(([k,v])=>items.push([k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()),String(v)])); g.innerHTML=items.map(([l,v])=>`<article class="profile-card"><p>${l}</p><h3>${v||'Not set'}</h3></article>`).join('');}}
+const showStartupError = message => {
+  let el = $('#startupError');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'startupError';
+    el.className = 'form-message startup-error';
+    document.body.prepend(el);
+  }
+  el.textContent = message;
+  el.hidden = false;
+};
 
+const feedback = {
+  mount() {
+    if ($('#feedbackButton')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'feedbackButton';
+    btn.className = 'feedback-button';
+    btn.textContent = 'Feedback';
+    document.body.appendChild(btn);
+    const modal = document.createElement('div');
+    modal.id = 'feedbackModal';
+    modal.className = 'feedback-modal';
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="feedback-modal-card">
+        <div class="panel-header">
+          <h2>Share Feedback</h2>
+          <p>Tell us what you experienced on this page.</p>
+        </div>
+        <form id="feedbackForm" class="auth-form" novalidate>
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" placeholder="Enter your name" required>
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Enter your email" required>
+          </label>
+          <label class="field">
+            <span>Your Feedback</span>
+            <textarea name="text" rows="4" placeholder="Write your feedback" required></textarea>
+          </label>
+          <p class="form-message" id="feedbackMessage" hidden></p>
+          <div class="feedback-modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeFeedbackButton">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submitFeedbackButton">Send Feedback</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const open = () => {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      $('input[name="name"]', modal)?.focus();
+    };
+    const close = () => {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+      $('#feedbackForm')?.reset();
+      msg($('#feedbackMessage'), '');
+    };
+    btn.addEventListener('click', open);
+    $('#closeFeedbackButton', modal)?.addEventListener('click', close);
+    modal.addEventListener('click', event => {
+      if (event.target === modal) close();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !modal.hidden) close();
+    });
+    $('#feedbackForm', modal)?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const submitBtn = $('#submitFeedbackButton', modal);
+      const fd = new FormData(form);
+      loading(submitBtn, true);
+      try {
+        await api('/api/feedback', {
+          method: 'POST',
+          body: {
+            page: document.title,
+            name: String(fd.get('name') || '').trim(),
+            email: String(fd.get('email') || '').trim(),
+            text: String(fd.get('text') || '').trim()
+          },
+          auth: false
+        });
+        alert('Feedback received. Thank you.');
+        close();
+      } catch (error) {
+        msg($('#feedbackMessage', modal), error.message || 'Could not send feedback.');
+      } finally {
+        loading(submitBtn, false);
+      }
+    });
+  }
+};
+
+const api = async (url, { method = 'GET', body, auth = true } = {}) => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && token()) headers.Authorization = `Bearer ${token()}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  let response;
+  try {
+    response = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error.name === 'AbortError') {
+      throw new Error('The server took too long to respond. Make sure `npm start` is running on `http://localhost:3000`.');
+    }
+    throw new Error(window.location.protocol === 'file:' ? 'Open the app through the backend server, not as a local file. Run `npm start` and use `http://localhost:3000`.' : 'Could not reach the server. Make sure `npm start` is running.');
+  }
+  clearTimeout(timeout);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Request failed.');
+  return data;
+};
+
+const applyTheme = theme => {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  document.body.classList.toggle('dark', next === 'dark');
+  const btn = $('#theme-toggle') || $('#darkModeToggle');
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(next === 'dark'));
+    btn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+  }
+  setTheme(next);
+};
+
+const syncBackLinks = () => {
+  const href = goRole(state.me?.role);
+  $$('[data-role-back-link]').forEach(link => link.setAttribute('href', href));
+  $('[data-orders-home-link]')?.setAttribute('href', href);
+};
+
+const renderPhrase = payload => {
+  const grid = $('#secretPhraseGrid');
+  const confirmGrid = $('#confirmWordsGrid');
+  if (!grid || !confirmGrid || !payload) return;
+  grid.innerHTML = payload.phrase.map((word, index) => `<div class="phrase-word"><span>${index + 1}</span><strong>${word}</strong></div>`).join('');
+  confirmGrid.innerHTML = payload.confirmPositions.map(pos => `<label class="field"><span>Confirm word #${pos + 1}</span><input type="text" name="confirm_word_${pos}" required></label>`).join('');
+};
+
+const readPendingPhrase = () => {
+  try { return JSON.parse(sessionStorage.getItem(SESSION.phrase) || 'null'); } catch { return null; }
+};
+
+const readPendingId = () => sessionStorage.getItem(SESSION.pendingId) || '';
+
+const setPendingSignup = (pendingId, phraseData = null) => {
+  if (pendingId) sessionStorage.setItem(SESSION.pendingId, pendingId);
+  else sessionStorage.removeItem(SESSION.pendingId);
+  if (phraseData) sessionStorage.setItem(SESSION.phrase, JSON.stringify(phraseData));
+  else sessionStorage.removeItem(SESSION.phrase);
+};
+
+const setStep = (steps, current) => steps.forEach(step => {
+  if (!step) return;
+  step.hidden = step !== current;
+  step.classList.toggle('active', step === current);
+});
+
+const loadMe = async () => {
+  if (!token()) return null;
+  try {
+    const data = await api('/api/me');
+    state.me = data.user;
+    syncBackLinks();
+    return state.me;
+  } catch {
+    setToken('');
+    state.me = null;
+    return null;
+  }
+};
+
+const loadAppData = async () => {
+  const data = await api('/api/app-data');
+  state.me = data.user;
+  state.appData = data;
+  syncBackLinks();
+  return data;
+};
+
+const renderDashboard = data => {
+  const me = data.user;
+  const pickups = data.pickups || [];
+  const uploads = data.uploads || [];
+  const transactions = data.transactions || [];
+  const myPickups = pickups.filter(x => x.userId === me.id);
+  const myUploads = uploads.filter(x => x.userId === me.id);
+  const myTransactions = transactions.filter(x => x.userId === me.id);
+  const waste = myUploads.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const points = waste * 20 + myPickups.length * 10;
+  const co2 = Math.round(waste * 2.3);
+
+  $('#dashboardUserName') && ($('#dashboardUserName').textContent = me.fullName || 'EcoCycle User');
+  $('#dashboardBalance') && ($('#dashboardBalance').textContent = fmtMoney(me.wallet?.balance || 0));
+  $('#dashboardWaste') && ($('#dashboardWaste').textContent = `${waste}kg`);
+  $('#dashboardPoints') && ($('#dashboardPoints').textContent = `${points}`);
+  $('#dashboardCo2') && ($('#dashboardCo2').textContent = `${co2}kg`);
+  $('#walletHeading') && ($('#walletHeading').textContent = fmtMoney(me.wallet?.balance || 0));
+  $('#walletIdMask') && ($('#walletIdMask').textContent = mask(me.id));
+  $('#pickupCountBadge') && ($('#pickupCountBadge').textContent = `${myPickups.length} Pickups`);
+
+  const activity = [
+    ...myUploads.map(item => ({ t: `Uploaded ${item.quantity}kg ${item.wasteType}`, d: `Uploaded from ${item.location}`, dt: item.createdAt })),
+    ...myPickups.map(item => ({ t: `Pickup request for ${item.wasteType}`, d: `${item.quantity}kg from ${item.location}`, dt: item.createdAt })),
+    ...myTransactions.map(item => ({ t: item.type, d: `${fmtMoney(item.amount)} via Interswitch | ${item.status}`, dt: item.createdAt }))
+  ].sort((a, b) => new Date(b.dt) - new Date(a.dt));
+  const activityList = $('#recentActivityList');
+  if (activityList) {
+    activityList.innerHTML = activity.slice(0, 5).map(item => `<article class="activity-item"><div><h3>${item.t}</h3><p>${item.d}</p></div><span>${fmtDate(item.dt)}</span></article>`).join('');
+    $('#activityEmptyState') && ($('#activityEmptyState').hidden = activity.length > 0);
+  }
+  const pickupList = $('#pickupStatusList');
+  if (pickupList) {
+    pickupList.innerHTML = myPickups.slice().reverse().map(item => `<article class="status-card"><div><h3>${item.wasteType} | ${item.quantity}kg</h3><p>${item.location}</p></div><span class="status-badge status-${String(item.status).toLowerCase().replace(/\s+/g, '-')}">${item.status}</span></article>`).join('');
+    $('#pickupEmptyState') && ($('#pickupEmptyState').hidden = myPickups.length > 0);
+  }
+
+  if (me.role === 'vendor') {
+    const paidUploads = uploads.filter(x => x.status === 'Paid');
+    const pendingUploads = uploads.filter(x => x.status !== 'Paid');
+    $('#vendorOrdersReceived') && ($('#vendorOrdersReceived').textContent = String(uploads.length));
+    $('#vendorWasteSupply') && ($('#vendorWasteSupply').textContent = `${uploads.reduce((sum, item) => sum + Number(item.quantity || 0), 0)}kg`);
+    $('#vendorOrderValue') && ($('#vendorOrderValue').textContent = fmtMoney(uploads.reduce((sum, item) => sum + Number(item.quantity || 0) * 200, 0)));
+    const vendorItems = [
+      ...pendingUploads.slice(0, 2).map(item => ({ t: `${item.wasteType} upload available`, d: `${item.quantity}kg ready from ${item.location}`, dt: item.createdAt })),
+      ...paidUploads.slice(0, 2).map(item => ({ t: `${item.wasteType} order settled`, d: `Seller paid through Interswitch for ${item.quantity}kg`, dt: item.createdAt }))
+    ].sort((a, b) => new Date(b.dt) - new Date(a.dt));
+    $('#vendorActivityList') && ($('#vendorActivityList').innerHTML = vendorItems.map(item => `<article class="activity-item"><div><h3>${item.t}</h3><p>${item.d}</p></div><span>${fmtDate(item.dt)}</span></article>`).join(''));
+    $('#vendorActivityEmptyState') && ($('#vendorActivityEmptyState').hidden = vendorItems.length > 0);
+    const latestAccepted = pickups.filter(x => x.status === 'Accepted').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const latestPaid = paidUploads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const latestItems = [
+      latestAccepted ? { t: 'Latest accepted order', d: `${latestAccepted.wasteType} pickup accepted for ${latestAccepted.quantity}kg at ${latestAccepted.location}`, dt: latestAccepted.createdAt } : null,
+      latestPaid ? { t: 'Latest paid seller', d: `Seller paid through Interswitch for ${latestPaid.quantity}kg of ${latestPaid.wasteType}`, dt: latestPaid.createdAt } : null
+    ].filter(Boolean);
+    $('#vendorLatestPanel') && ($('#vendorLatestPanel').innerHTML = latestItems.map(item => `<article class="activity-item"><div><h3>${item.t}</h3><p>${item.d}</p></div><span>${fmtDate(item.dt)}</span></article>`).join(''));
+    $('#vendorLatestEmptyState') && ($('#vendorLatestEmptyState').hidden = latestItems.length > 0);
+  }
+
+  if (me.role === 'ngo-hub') {
+    const acceptedPickups = pickups.filter(x => x.status === 'Accepted');
+    const paidUploads = uploads.filter(x => x.status === 'Paid');
+    const totalCollected = uploads.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const plasticCollected = uploads.filter(x => x.wasteType === 'Plastics').reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const settledValue = paidUploads.reduce((sum, item) => sum + Number(item.quantity || 0) * 200, 0);
+    $('#ngoWasteCollected') && ($('#ngoWasteCollected').textContent = `${totalCollected}kg`);
+    $('#ngoActivePickups') && ($('#ngoActivePickups').textContent = String(acceptedPickups.length));
+    $('#ngoEarnings') && ($('#ngoEarnings').textContent = fmtMoney(settledValue));
+    $('#ngoPlasticCollected') && ($('#ngoPlasticCollected').textContent = `${plasticCollected}kg`);
+    $('#ngoSettledValue') && ($('#ngoSettledValue').textContent = fmtMoney(settledValue));
+    $('#ngoActiveRequests') && ($('#ngoActiveRequests').textContent = String(pickups.filter(x => x.status !== 'Completed').length + uploads.filter(x => x.status !== 'Paid').length));
+    const latestAccepted = acceptedPickups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const latestPaid = paidUploads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    $('#ngoAcceptedActivityList') && ($('#ngoAcceptedActivityList').innerHTML = latestAccepted ? `<article class="activity-item"><div><h3>${latestAccepted.wasteType} pickup accepted</h3><p>${latestAccepted.quantity}kg from ${latestAccepted.location} is now in progress.</p></div><span>${fmtDate(latestAccepted.createdAt)}</span></article>` : '');
+    $('#ngoAcceptedEmptyState') && ($('#ngoAcceptedEmptyState').hidden = Boolean(latestAccepted));
+    $('#ngoPaidActivityList') && ($('#ngoPaidActivityList').innerHTML = latestPaid ? `<article class="activity-item"><div><h3>Latest paid seller</h3><p>${latestPaid.quantity}kg of ${latestPaid.wasteType} was settled through Interswitch.</p></div><span>${fmtDate(latestPaid.createdAt)}</span></article>` : '');
+    $('#ngoPaidEmptyState') && ($('#ngoPaidEmptyState').hidden = Boolean(latestPaid));
+  }
+};
+
+const bootstrap = async () => {
+  loader.show();
+  const startupFallback = setTimeout(() => loader.hide(), 2500);
+  applyTheme(getTheme());
+  feedback.mount();
+  ($('#theme-toggle') || $('#darkModeToggle'))?.addEventListener('click', () => applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark'));
+
+  const slides = $$('.slide');
+  if (slides.length) {
+    let index = 0;
+    const showSlide = current => slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === current));
+    showSlide(0);
+    setInterval(() => { index = (index + 1) % slides.length; showSlide(index); }, 5000);
+  }
+
+  $('#logoutButton')?.addEventListener('click', async () => {
+    try { await api('/api/auth/logout', { method: 'POST' }); } catch {}
+    setToken('');
+    location.href = 'login.html';
+  });
+
+  const me = await loadMe();
+
+  const signupForm = $('#signupForm');
+  const verifyForm = $('#verificationForm');
+  const walletForm = $('#walletSetupForm');
+  if (signupForm && verifyForm && walletForm) {
+    const steps = [$('#signupStep'), $('#verificationStep'), $('#walletStep')];
+    const roleInput = $('#selectedRole');
+    const roleTitle = $('#selectedRoleTitle');
+    const formContainer = $('#signupFormContainer');
+    const roleSelection = $('#roleSelection');
+    const details = $('#signupDetailsPanel');
+    const roleGrid = $('#roleCardGrid');
+    const ngoType = $('#ngoHubType');
+    const signupMsg = $('#signupMessage');
+    const verMsg = $('#verificationMessage');
+    const wallMsg = $('#walletMessage');
+    const createBtn = $('#createAccountButton');
+    const pwd = $('#signupPassword');
+    const cpwd = $('#confirmSignupPassword');
+    const roles = { generator: 'Waste Generator', vendor: 'Vendor', 'ngo-hub': 'NGO / Hub' };
+    const gen = $('#generatorFields'), ven = $('#vendorFields'), ngoHub = $('#ngoHubFields'), ngo = $('#ngoFields'), hub = $('#hubFields');
+    const toggleWrap = (wrap, on) => { if (!wrap) return; wrap.hidden = !on; wrap.style.display = on ? 'block' : 'none'; };
+    const req = (wrap, on) => wrap ? $$('input,select,textarea', wrap).forEach(i => i.required = on) : null;
+    const syncStrength = () => {
+      const result = strength(pwd?.value || '');
+      $('#passwordStrengthLabel') && ($('#passwordStrengthLabel').textContent = result.label);
+      $('#passwordStrengthLabel') && ($('#passwordStrengthLabel').className = `strength-label ${result.cls}`);
+      $('#strengthBar') && ($('#strengthBar').className = `strength-bar ${result.cls}`);
+      $('#strengthBar') && ($('#strengthBar').style.width = `${(result.s / 4) * 100}%`);
+      [['#ruleUppercase', result.c.u], ['#ruleLowercase', result.c.l], ['#ruleNumber', result.c.n], ['#ruleLength', result.c.x]].forEach(([selector, valid]) => $(selector)?.classList.toggle('valid', valid));
+      return result;
+    };
+    const syncCreateButton = () => { if (createBtn) createBtn.disabled = !(roleInput.value && syncStrength().ok); };
+    const setRole = role => {
+      roleInput.value = role;
+      $$('.role-card').forEach(card => card.classList.toggle('active', card.dataset.role === role));
+      if (roleTitle) roleTitle.textContent = roles[role] || 'Selected Role';
+      if (details) details.hidden = !role;
+      if (roleSelection) roleSelection.style.display = role ? 'none' : 'block';
+      if (formContainer) formContainer.style.display = role ? 'block' : 'none';
+      toggleWrap(gen, role === 'generator');
+      toggleWrap(ven, role === 'vendor');
+      toggleWrap(ngoHub, role === 'ngo-hub');
+      req(gen, role === 'generator');
+      req(ven, role === 'vendor');
+      req(ngoHub, role === 'ngo-hub');
+      if (role !== 'ngo-hub') {
+        ngoType.value = '';
+        toggleWrap(ngo, false);
+        toggleWrap(hub, false);
+      }
+      syncCreateButton();
+    };
+    $('#toggleSignupPassword')?.addEventListener('click', () => { const v = pwd.type === 'password'; pwd.type = v ? 'text' : 'password'; $('#toggleSignupPassword').textContent = v ? 'Hide' : 'Show'; });
+    $('#toggleConfirmSignupPassword')?.addEventListener('click', () => { const v = cpwd.type === 'password'; cpwd.type = v ? 'text' : 'password'; $('#toggleConfirmSignupPassword').textContent = v ? 'Hide' : 'Show'; });
+    roleGrid?.addEventListener('click', event => { const card = event.target.closest('.role-card'); if (card) setRole(card.dataset.role || ''); });
+    $('#changeRoleButton')?.addEventListener('click', () => setRole(''));
+    ngoType?.addEventListener('change', () => { toggleWrap(ngo, ngoType.value === 'NGO'); toggleWrap(hub, ngoType.value === 'Hub'); req(ngo, ngoType.value === 'NGO'); req(hub, ngoType.value === 'Hub'); syncCreateButton(); });
+    pwd?.addEventListener('input', syncCreateButton);
+    cpwd?.addEventListener('input', syncCreateButton);
+    signupForm.addEventListener('change', syncCreateButton);
+    setRole(new URLSearchParams(location.search).get('role') || '');
+    syncStrength();
+    syncCreateButton();
+
+    signupForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      msg(signupMsg, '');
+      const fd = new FormData(signupForm);
+      const password = String(fd.get('password') || '');
+      const confirmPassword = String(fd.get('confirm_password') || '');
+      if (password !== confirmPassword) return msg(signupMsg, 'Passwords do not match.');
+      if (!syncStrength().ok) return msg(signupMsg, 'Password must be strong before you continue.');
+      const payload = {
+        fullName: String(fd.get('full_name') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        phone: String(fd.get('phone') || '').trim(),
+        password,
+        role: String(fd.get('role') || '').trim(),
+        subtype: String(fd.get('generator_subtype') || fd.get('vendor_business_type') || fd.get('ngo_hub_type') || '').trim(),
+        userType: String(fd.get('generator_subtype') || fd.get('vendor_business_type') || fd.get('ngo_hub_type') || fd.get('role') || '').trim(),
+        referralCode: String(fd.get('referral_code') || '').trim(),
+        roleData: {
+          generatorSubtype: String(fd.get('generator_subtype') || '').trim(),
+          businessName: String(fd.get('vendor_business_name') || '').trim(),
+          businessType: String(fd.get('vendor_business_type') || '').trim(),
+          location: String(fd.get('vendor_location') || fd.get('ngo_location') || fd.get('hub_location') || '').trim(),
+          yearsOfOperation: String(fd.get('vendor_years') || '').trim(),
+          registrationNumber: String(fd.get('vendor_registration') || fd.get('ngo_registration') || fd.get('hub_registration') || '').trim(),
+          organizationName: String(fd.get('ngo_name') || '').trim(),
+          yearsActive: String(fd.get('ngo_years') || '').trim(),
+          focusArea: String(fd.get('ngo_focus') || '').trim(),
+          missionDescription: String(fd.get('ngo_mission') || '').trim(),
+          hubName: String(fd.get('hub_name') || '').trim(),
+          availability: String(fd.get('hub_availability') || '').trim(),
+          dailyCapacity: String(fd.get('hub_capacity') || '').trim(),
+          wasteTypesAccepted: String(fd.get('hub_waste_types') || '').trim()
+        }
+      };
+      loading(createBtn, true, 'Please wait...');
+      loader.show('Creating account, please wait...');
+      try {
+        const data = await api('/api/auth/signup/start', { method: 'POST', body: payload, auth: false });
+        setPendingSignup(data.pendingId);
+        msg(verMsg, `Verification code sent. Current code: ${data.verificationCode}`);
+        setStep(steps, $('#verificationStep'));
+      } catch (error) {
+        msg(signupMsg, error.message);
+      } finally {
+        loading(createBtn, false);
+        loader.hide();
+      }
+    });
+
+    verifyForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const body = { pendingId: readPendingId(), code: String(new FormData(verifyForm).get('verification_code') || '').trim() };
+      loader.show('Verifying, please wait...');
+      try {
+        const data = await api('/api/auth/signup/verify', { method: 'POST', body, auth: false });
+        setPendingSignup(readPendingId(), data);
+        renderPhrase(data);
+        setStep(steps, $('#walletStep'));
+      } catch (error) {
+        msg(verMsg, error.message);
+      } finally {
+        loader.hide();
+      }
+    });
+
+    walletForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const fd = new FormData(walletForm);
+      const pin = String(fd.get('wallet_pin') || '').trim();
+      const cpin = String(fd.get('confirm_wallet_pin') || '').trim();
+      if (pin !== cpin) return msg(wallMsg, 'Wallet PINs do not match.');
+      const phraseData = readPendingPhrase();
+      const answers = Object.fromEntries((phraseData?.confirmPositions || []).map(pos => [pos, String(fd.get(`confirm_word_${pos}`) || '').trim()]));
+      loader.show('Finalizing account, please wait...');
+      try {
+        const data = await api('/api/auth/signup/complete', { method: 'POST', body: { pendingId: readPendingId(), pin, answers }, auth: false });
+        setToken(data.token);
+        setPendingSignup('', null);
+        location.href = goRole(data.user.role);
+      } catch (error) {
+        msg(wallMsg, error.message);
+      } finally {
+        loader.hide();
+      }
+    });
+  }
+
+  const loginForm = $('#loginForm');
+  if (loginForm) {
+    $('#toggleLoginPassword')?.addEventListener('click', () => {
+      const input = $('#loginPassword');
+      const visible = input.type === 'password';
+      input.type = visible ? 'text' : 'password';
+      $('#toggleLoginPassword').textContent = visible ? 'Hide' : 'Show';
+    });
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const formMessage = $('#loginMessage');
+      msg(formMessage, '');
+      const fd = new FormData(loginForm);
+      try {
+        const data = await api('/api/auth/login', {
+          method: 'POST',
+          body: {
+            identifier: String(fd.get('identifier') || '').trim(),
+            password: String(fd.get('password') || '')
+          },
+          auth: false
+        });
+        setToken(data.token);
+        location.href = goRole(data.user.role);
+      } catch (error) {
+        msg(formMessage, error.message);
+      }
+    });
+  }
+
+  if ($('#dashboardPage')) {
+    if (!me) return location.href = 'login.html';
+    const data = await loadAppData();
+    if (($('#dashboardPage').dataset.dashboardRole || 'generator') !== data.user.role) return location.href = goRole(data.user.role);
+    renderDashboard(data);
+  }
+
+  const pickupForm = $('#pickupForm');
+  if (pickupForm) {
+    if (!me) return location.href = 'login.html';
+    $('input[name="pickup_time"]', pickupForm)?.setAttribute('min', new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+    pickupForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = $('#pickupSubmitButton');
+      const messageEl = $('#pickupMessage');
+      const fd = new FormData(pickupForm);
+      loading(button, true);
+      loader.show('Submitting pickup request, please wait...');
+      try {
+        await api('/api/pickups', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), pickupTime: String(fd.get('pickup_time') || '').trim(), notes: String(fd.get('notes') || '').trim() } });
+        msg(messageEl, 'Pickup request sent.');
+        pickupForm.reset();
+      } catch (error) {
+        msg(messageEl, error.message);
+      } finally {
+        loading(button, false);
+        loader.hide();
+      }
+    });
+  }
+
+  const uploadForm = $('#uploadForm');
+  if (uploadForm) {
+    if (!me) return location.href = 'login.html';
+    uploadForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = $('#uploadSubmitButton');
+      const messageEl = $('#uploadMessage');
+      const fd = new FormData(uploadForm);
+      const file = $('input[name="waste_image"]', uploadForm)?.files?.[0];
+      loading(button, true);
+      loader.show('Uploading waste, please wait...');
+      try {
+        await api('/api/uploads', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), imageName: file ? file.name : '' } });
+        msg(messageEl, 'Waste uploaded.');
+        uploadForm.reset();
+      } catch (error) {
+        msg(messageEl, error.message);
+      } finally {
+        loading(button, false);
+        loader.hide();
+      }
+    });
+  }
+
+  if ($('#walletPage')) {
+    if (!me) return location.href = 'login.html';
+    const data = await loadAppData();
+    $('#walletBalanceAmount') && ($('#walletBalanceAmount').textContent = fmtMoney(data.user.wallet.balance));
+    $('#walletIdMask') && ($('#walletIdMask').textContent = mask(data.user.id));
+    $('#referralLinkText') && ($('#referralLinkText').textContent = data.user.referralLink || '');
+    $('#referralCountText') && ($('#referralCountText').textContent = `${data.user.referralCount || 0} referrals`);
+    const tx = data.transactions.filter(item => item.userId === data.user.id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    $('#walletTransactionList') && ($('#walletTransactionList').innerHTML = tx.map(item => `<article class="transaction-item"><div><h3>${fmtMoney(item.amount)}</h3><p>${item.type} via Interswitch | ${item.status}</p></div><span>${fmtDate(item.createdAt)}</span></article>`).join(''));
+    $('#walletEmptyState') && ($('#walletEmptyState').hidden = tx.length > 0);
+    $('#copyReferralButton')?.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText($('#referralLinkText')?.textContent || ''); } finally { $('#copyReferralButton').textContent = 'Copied'; }
+    });
+    $('#withdrawForm')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = $('#withdrawSubmitButton');
+      const messageEl = $('#withdrawMessage');
+      const fd = new FormData($('#withdrawForm'));
+      loading(button, true);
+      loader.show('Processing Interswitch withdrawal, please wait...');
+      try {
+        const result = await api('/api/wallet/withdraw', { method: 'POST', body: { amount: Number(fd.get('amount') || 0), pin: String(fd.get('wallet_pin') || '').trim(), accountName: String(fd.get('account_name') || '').trim(), bankName: String(fd.get('bank_name') || '').trim(), accountNumber: String(fd.get('account_number') || '').trim() } });
+        $('#walletBalanceAmount') && ($('#walletBalanceAmount').textContent = fmtMoney(result.user.wallet.balance));
+        msg(messageEl, 'Withdrawal submitted through Interswitch.');
+        $('#withdrawForm').reset();
+      } catch (error) {
+        msg(messageEl, error.message);
+      } finally {
+        loading(button, false);
+        loader.hide();
+      }
+    });
+  }
+
+  if ($('#profilePage')) {
+    if (!me) return location.href = 'login.html';
+    const currentMe = state.me || await loadMe();
+    const grid = $('#profileGrid');
+    const items = [['Full Name', currentMe.fullName], ['Email', currentMe.email], ['Phone Number', currentMe.phone], ['Role', currentMe.role], ['Subtype', currentMe.userType || currentMe.subtype], ['Referral Link', currentMe.referralLink]];
+    Object.entries(currentMe.roleData || {}).forEach(([key, value]) => { if (value) items.push([titleCase(key), String(value)]); });
+    grid && (grid.innerHTML = items.map(([label, value]) => `<article class="profile-card"><p>${label}</p><h3>${value || 'Not set'}</h3></article>`).join(''));
+    $('#profileEmptyState') && ($('#profileEmptyState').hidden = items.length > 0);
+  }
+
+  if ($('#manageOrdersPage')) {
+    if (!me) return location.href = 'login.html';
+    const notice = $('#manageOrdersMessage');
+    const list = $('#ordersList');
+    const empty = $('#ordersEmptyState');
+    const renderOrders = async () => {
+      const data = await api('/api/orders');
+      list.innerHTML = data.orders.map(order => `<article class="order-card"><div class="order-card-top"><div><p class="dashboard-kicker">${order.kind === 'pickup' ? 'Pickup Request' : 'Waste Upload'}</p><h3>${order.wasteType} ${order.kind === 'pickup' ? 'pickup request' : 'waste upload'}</h3></div><span class="status-badge status-${String(order.status).toLowerCase().replace(/\s+/g, '-')}">${order.status}</span></div><p>${order.quantity}kg from ${order.location}</p><div class="order-meta"><span>${order.sellerName}</span><span>${titleCase(order.role)}</span><span>${fmtDate(order.createdAt)}</span></div><div class="order-actions"><button type="button" class="btn btn-primary order-action" data-kind="${order.kind}" data-id="${order.id}">${order.kind === 'pickup' ? 'Accept Order' : 'Pay Seller via Interswitch'}</button></div></article>`).join('');
+      if (empty) empty.hidden = data.orders.length > 0;
+    };
+    await renderOrders();
+    list?.addEventListener('click', async event => {
+      const button = event.target.closest('.order-action');
+      if (!button) return;
+      loading(button, true);
+      try {
+        await api('/api/orders/respond', { method: 'POST', body: { kind: button.dataset.kind, id: button.dataset.id } });
+        msg(notice, button.dataset.kind === 'pickup' ? 'Pickup request accepted.' : 'Seller payment completed through Interswitch.');
+        await renderOrders();
+      } catch (error) {
+        msg(notice, error.message);
+      } finally {
+        loading(button, false);
+      }
+    });
+  }
+
+  clearTimeout(startupFallback);
+  loader.hide();
+};
+
+bootstrap().catch(error => {
+  console.error(error);
+  showStartupError(error.message || 'The app could not start.');
+  loader.hide();
+});

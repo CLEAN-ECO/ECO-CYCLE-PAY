@@ -1,0 +1,13 @@
+{
+  "name": "eco-cycle-pay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EcoCycle Pay server-backed web app",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}

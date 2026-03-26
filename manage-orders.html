@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Manage Orders</title>
+    <meta
+        name="description"
+        content="Review pickup requests and waste uploads, then respond to orders inside EcoCycle Pay."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="manageOrdersPage">
+    <main class="utility-page">
+        <section class="utility-shell">
+            <header class="page-header">
+                <a href="dashboard.html" class="back-link" data-role-back-link>Back</a>
+                <p class="dashboard-kicker">Manage Orders</p>
+                <h1>Review incoming requests and respond</h1>
+                <p class="page-subtitle">Pickup requests and waste uploads from users appear here so you can accept, schedule, and pay sellers via Interswitch.</p>
+            </header>
+
+            <p class="form-message" id="manageOrdersMessage" hidden></p>
+
+            <section class="activity-section">
+                <div class="section-copy">
+                    <p class="dashboard-kicker">Incoming Orders</p>
+                    <h2>All submitted requests</h2>
+                </div>
+
+                <div class="orders-list" id="ordersList"></div>
+                <div class="empty-state" id="ordersEmptyState" hidden>
+                    <h3>No orders yet</h3>
+                    <p>Pickup requests and waste uploads will appear here when users submit them.</p>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a href="dashboard-ngo.html" class="bottom-nav-link" data-orders-home-link>Home</a>
+        <a href="manage-orders.html" class="bottom-nav-link active">Orders</a>
+        <a href="wallet.html" class="bottom-nav-link">Wallet</a>
+        <a href="profile.html" class="bottom-nav-link">Profile</a>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>
