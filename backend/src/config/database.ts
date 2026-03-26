@@ -12,13 +12,11 @@ export const connectDB = async (): Promise<void> => {
     }
 
     try {
-        const conn = await mongoose.connect(DB_URI, {
+        await mongoose.connect(DB_URI, {
             // useNewUrlParser and useUnifiedTopology are deprecated in mongoose 6.x
             retryWrites: true,
             w: "majority",
         });
-
-        console.log(`DB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error("Error connecting to DB:", error);
         throw error;

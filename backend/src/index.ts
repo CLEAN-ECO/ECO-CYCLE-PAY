@@ -4,8 +4,9 @@ import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import { connectDB } from "./config/database";
 import swaggerSpec from "./config/swagger";
-import errorHandler from "./middleware/errorHandler";
+import errorHandler from "./middlewares/errorHandler";
 import healthRoutes from "./routes/health";
+import authRoutes from "./routes/auth";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN || "*",
+        origin: "*",
         credentials: true,
     }),
 );
@@ -41,6 +42,7 @@ app.get("/api-docs.json", (req: Request, res: Response) => {
 
 // Routes
 app.use("/api/v1/health", healthRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
