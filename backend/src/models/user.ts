@@ -1,3 +1,119 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: 65a1b2c3d4e5f6g7h8i9j0k1
+ *         full_name:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *           example: John Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *         phone:
+ *           type: string
+ *           example: +234801234567
+ *         role:
+ *           type: string
+ *           enum: [generator, vendor, ngo-hub]
+ *           example: generator
+ *         email_verified:
+ *           type: boolean
+ *           example: false
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *       required: [full_name, email, phone, role]
+ *     GeneratorUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             generator_subtype:
+ *               type: string
+ *               enum: [Household, Hotel, School, Event Center, Restaurant, Office, Conference Center]
+ *               example: Household
+ *     VendorUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             vendor_business_name:
+ *               type: string
+ *               example: Green Waste Solutions
+ *             vendor_business_type:
+ *               type: string
+ *               example: Waste Management
+ *             vendor_location:
+ *               type: string
+ *               example: Lagos, Nigeria
+ *             vendor_years:
+ *               type: integer
+ *               example: 5
+ *     NGOUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             ngo_hub_type:
+ *               type: string
+ *               enum: [NGO]
+ *               example: NGO
+ *             ngo_name:
+ *               type: string
+ *               example: Environmental Trust NGO
+ *             ngo_registration:
+ *               type: string
+ *               example: CAC/NGO/12345
+ *             ngo_years:
+ *               type: integer
+ *               example: 10
+ *             ngo_focus:
+ *               type: string
+ *               example: Waste Management & Recycling
+ *             ngo_location:
+ *               type: string
+ *               example: Lagos, Nigeria
+ *             ngo_mission:
+ *               type: string
+ *               example: To promote sustainable waste management practices
+ *     HubUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             ngo_hub_type:
+ *               type: string
+ *               enum: [Hub]
+ *               example: Hub
+ *             hub_name:
+ *               type: string
+ *               example: Central Waste Hub
+ *             hub_capacity:
+ *               type: integer
+ *               description: Daily capacity in kg
+ *               example: 5000
+ *             hub_location:
+ *               type: string
+ *               example: Lagos, Nigeria
+ *             hub_availability:
+ *               type: string
+ *               example: 24/7
+ *             hub_description:
+ *               type: string
+ *               example: Main waste collection and processing hub
+ */
+
 import { Schema, Document, Model, model } from "mongoose";
 
 // Type definitions for different user roles
