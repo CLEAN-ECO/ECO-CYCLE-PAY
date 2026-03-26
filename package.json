@@ -1,13 +1,17 @@
 {
   "name": "eco-cycle-pay",
   "version": "1.0.0",
-  "private": true,
-  "description": "EcoCycle Pay server-backed web app",
+  "description": "ECO-CYCLE-PAY - Enyata × Interswitch Buildathon 2026",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
+    "prepare": "husky",
     "start": "node server.js",
     "dev": "node server.js"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
   }
 }
