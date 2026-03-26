@@ -17,6 +17,12 @@ const token = () => localStorage.getItem(SESSION.token) || '';
 const setToken = value => value ? localStorage.setItem(SESSION.token, value) : localStorage.removeItem(SESSION.token);
 const setTheme = value => localStorage.setItem(SESSION.theme, value);
 const getTheme = () => localStorage.getItem(SESSION.theme) || 'light';
+const apiBase = (() => {
+  const { protocol, hostname, port } = window.location;
+  if (protocol === 'file:') return 'http://localhost:3000';
+  if ((hostname === 'localhost' || hostname === '127.0.0.1') && port && port !== '3000') return 'http://localhost:3000';
+  return '';
+})();
 
 const fmtMoney = n => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(n || 0));
 const fmtDate = d => new Date(d).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -185,7 +191,7 @@ const api = async (url, { method = 'GET', body, auth = true } = {}) => {
   const timeout = setTimeout(() => controller.abort(), 8000);
   let response;
   try {
-    response = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
+    response = await fetch(`${apiBase}${url}`, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
   } catch (error) {
     clearTimeout(timeout);
     if (error.name === 'AbortError') {

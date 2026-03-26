@@ -2247,3 +2247,12 @@ body.dark .feedback-modal-actions .btn-secondary:focus-visible {
         align-items: flex-start;
     }
 }
+/* Emergency Demo Fix: Hide all feedback elements */
+[id*="feedback"], 
+[class*="feedback"], 
+.feedback-btn, 
+#feedback-modal {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
