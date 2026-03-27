@@ -11,6 +11,7 @@ import dashboardRoutes from "./routes/dashboard";
 import wasteRoutes from "./routes/waste";
 import walletRoutes from "./routes/wallet";
 import userRoutes from "./routes/user";
+import paymentRouter from "./routes/payment";
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/waste", wasteRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/payment", paymentRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

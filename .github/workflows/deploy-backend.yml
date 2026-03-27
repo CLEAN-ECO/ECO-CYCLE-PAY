@@ -68,6 +68,26 @@ jobs:
                 {
                   "key": "API_URL",
                   "value": "${{ secrets.API_URL }}"
+                },
+                {
+                  "key": "REDIRECT_URL",
+                  "value": "${{ secrets.REDIRECT_URL }}"
+                },
+                {
+                  "key": "MERCHANT_CODE",
+                  "value": "${{ secrets.MERCHANT_CODE }}"
+                },
+                {
+                  "key": "PAYABLE_CODE",
+                  "value": "${{ secrets.PAYABLE_CODE }}"
+                },
+                {
+                  "key": "CLIENT_ID",
+                  "value": "${{ secrets.CLIENT_ID }}"
+                },
+                {
+                  "key": "SECRET_KEY",
+                  "value": "${{ secrets.SECRET_KEY }}"
                 }
               ]
             }'
