@@ -6,6 +6,8 @@ export interface IWallet extends Document {
     total_earned: number;
     total_withdrawn: number;
     last_transaction_date?: Date;
+    pin: number; // 4-digit PIN for withdrawals
+    secret_phrase?: string[]; // Optional recovery phrase
     created_at: Date;
     updated_at: Date;
 }
@@ -35,6 +37,16 @@ const walletSchema = new Schema<IWallet>(
         },
         last_transaction_date: {
             type: Date,
+        },
+        pin: {
+            type: Number,
+            default: 0,
+            min: [0, "PIN must be a 4-digit number"],
+            max: [9999, "PIN must be a 4-digit number"],
+        },
+        secret_phrase: {
+            type: [String],
+            default: [],
         },
     },
     {

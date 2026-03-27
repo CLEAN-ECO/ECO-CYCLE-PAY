@@ -5,6 +5,7 @@ import {
     setupWallet,
     resendVerificationCode,
     login,
+    logout,
 } from "../controllers/auth";
 import {
     validateSignup,
@@ -449,5 +450,30 @@ authRouter.post("/resend-verification", validateResendVerification(), resendVeri
  *         description: Server error
  */
 authRouter.post("/login", validateLogin(), login);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Logout from EcoCycle Pay account
+ *     description: |
+ *       Sends success response indicating logout. JWT token is invalidated on the client side.
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Logout successful"
+ *       500:
+ *         description: Server error
+ */
+authRouter.post("/logout", logout);
 
 export default authRouter;

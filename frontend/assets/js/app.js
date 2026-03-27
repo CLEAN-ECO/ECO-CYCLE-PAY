@@ -394,7 +394,7 @@ const bootstrap = async () => {
   }
 
   $('#logoutButton')?.addEventListener('click', async () => {
-    try { await api('/api/auth/logout', { method: 'POST' }); } catch {}
+    try { await api('/api/v1/auth/logout', { method: 'POST' }); } catch {}
     setToken('');
     location.href = 'login.html';
   });
@@ -461,7 +461,13 @@ const bootstrap = async () => {
     pwd?.addEventListener('input', syncCreateButton);
     cpwd?.addEventListener('input', syncCreateButton);
     signupForm.addEventListener('change', syncCreateButton);
-    setRole(new URLSearchParams(location.search).get('role') || '');
+    const urlParams = new URLSearchParams(location.search);
+    setRole(urlParams.get('role') || '');
+    const referralFromUrl = (urlParams.get('referral_code') || urlParams.get('ref') || urlParams.get('referral') || '').trim();
+    if (referralFromUrl) {
+      const referralInput = $('input[name="referral_code"]', signupForm);
+      if (referralInput) referralInput.value = referralFromUrl;
+    }
     syncStrength();
     syncCreateButton();
 
@@ -691,7 +697,7 @@ const bootstrap = async () => {
       loading(button, true);
       loader.show('Processing Interswitch withdrawal, please wait...');
       try {
-        const result = await api('/api/wallet/withdraw', { method: 'POST', body: { amount: Number(fd.get('amount') || 0), pin: String(fd.get('wallet_pin') || '').trim(), accountName: String(fd.get('account_name') || '').trim(), bankName: String(fd.get('bank_name') || '').trim(), accountNumber: String(fd.get('account_number') || '').trim() } });
+        const result = await api('/api/v1/payment/withdraw', { method: 'POST', body: { amount: Number(fd.get('amount') || 0), pin: String(fd.get('wallet_pin') || '').trim(), accountName: String(fd.get('account_name') || '').trim(), bankName: String(fd.get('bank_name') || '').trim(), accountNumber: String(fd.get('account_number') || '').trim() } });
         $('#walletBalanceAmount') && ($('#walletBalanceAmount').textContent = fmtMoney(result.user.wallet.balance));
         msg(messageEl, 'Withdrawal submitted through Interswitch.');
         $('#withdrawForm').reset();
@@ -720,7 +726,7 @@ const bootstrap = async () => {
     const list = $('#ordersList');
     const empty = $('#ordersEmptyState');
     const renderOrders = async () => {
-      const data = await api('/api/orders');
+      const data = await api('/api/v1/orders');
       list.innerHTML = data.orders.map(order => `<article class="order-card"><div class="order-card-top"><div><p class="dashboard-kicker">${order.kind === 'pickup' ? 'Pickup Request' : 'Waste Upload'}</p><h3>${order.wasteType} ${order.kind === 'pickup' ? 'pickup request' : 'waste upload'}</h3></div><span class="status-badge status-${String(order.status).toLowerCase().replace(/\s+/g, '-')}">${order.status}</span></div><p>${order.quantity}kg from ${order.location}</p><div class="order-meta"><span>${order.sellerName}</span><span>${titleCase(order.role)}</span><span>${fmtDate(order.createdAt)}</span></div><div class="order-actions"><button type="button" class="btn btn-primary order-action" data-kind="${order.kind}" data-id="${order.id}">${order.kind === 'pickup' ? 'Accept Order' : 'Pay Seller via Interswitch'}</button></div></article>`).join('');
       if (empty) empty.hidden = data.orders.length > 0;
     };
@@ -730,7 +736,7 @@ const bootstrap = async () => {
       if (!button) return;
       loading(button, true);
       try {
-        await api('/api/orders/respond', { method: 'POST', body: { kind: button.dataset.kind, id: button.dataset.id } });
+        await api('/api/v1/orders/respond', { method: 'POST', body: { kind: button.dataset.kind, id: button.dataset.id } });
         msg(notice, button.dataset.kind === 'pickup' ? 'Pickup request accepted.' : 'Seller payment completed through Interswitch.');
         await renderOrders();
       } catch (error) {

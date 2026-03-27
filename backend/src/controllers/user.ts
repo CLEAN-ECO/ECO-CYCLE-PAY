@@ -55,13 +55,13 @@ export const getUserDetails = async (
             }),
             ...(user.role === "vendor" && {
                 vendor_business_name: (user as IVendorUser)?.vendor_business_name,
-                vendor_business_type: (user as IVendorUser)?.vendor_business_type,
+                userType: (user as IVendorUser)?.vendor_business_type,
                 vendor_location: (user as IVendorUser)?.vendor_location,
                 vendor_years: (user as IVendorUser)?.vendor_years,
                 vendor_registration: (user as IVendorUser)?.vendor_registration,
             }),
             ...(user.role === "ngo-hub" && {
-                ngo_hub_type: (user as INGOUser | IHubUser).ngo_hub_type,
+                userType: (user as INGOUser | IHubUser).ngo_hub_type,
                 ...([(user as INGOUser | IHubUser).ngo_hub_type].includes("NGO") && {
                     ngo_name: (user as INGOUser)?.ngo_name,
                     ngo_registration: (user as INGOUser)?.ngo_registration,

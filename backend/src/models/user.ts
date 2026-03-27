@@ -202,6 +202,7 @@ const userSchema = new Schema<IUser>(
             type: String,
             required: [true, "Phone number is required"],
             match: [/^\+?[\d\s\-()]+$/, "Please provide a valid phone number"],
+            unique: true,
         },
         password: {
             type: String,

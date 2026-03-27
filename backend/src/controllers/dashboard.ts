@@ -14,6 +14,9 @@ import { logger } from "../utils/logger";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import Transaction, { ITransaction } from "../models/transaction";
 import WasteSubmission, { IWasteSubmission } from "../models/wasteSubmission";
+import CollectionHub from "../models/collectionHub";
+import { ObjectId } from "mongoose";
+import Referral from "../models/referral";
 
 /**
  * Get dashboard data based on user role
@@ -37,19 +40,33 @@ export const getDashboardData = async (
             return sendNotFound(res, "User not found");
         }
 
+        // Get referral details
+        const referral = await Referral.findOne({ user: userId });
+
         // Get wallet details
         const wallet = await Wallet.findOne({ user: userId });
 
-        // Get pickups based on user role
+        // Get pickups and uploads based on user role
         let pickups: IPickup[] = [];
+        let uploads: IWasteSubmission[] = [];
+
         if (user.role === "generator") {
             pickups = await Pickup.find({ requester: userId }).lean();
+            uploads = await WasteSubmission.find({ user: userId }).lean();
         } else if (user.role === "ngo-hub") {
-            pickups = await Pickup.find({ collector: userId }).lean();
+            const collectionHub = await CollectionHub.findOne({ manager: userId });
+            if (collectionHub) {
+                pickups = await Pickup.find({ collector: userId }).lean();
+                uploads = await WasteSubmission.find({
+                    collection_hub: collectionHub._id as unknown as ObjectId,
+                }).lean();
+            } else {
+                logger(`No collection hub found for NGO-Hub user ${userId}`, "warn");
+            }
+        } else if (user.role === "vendor") {
+            pickups = await Pickup.find({}).lean();
+            uploads = await WasteSubmission.find({}).lean();
         }
-
-        // Get waste submission uploads (generators can submit)
-        const uploads = await WasteSubmission.find({ user: userId }).lean();
 
         // Get transactions (from Activity model)
         const transactions = await Transaction.find({ user: userId })
@@ -62,6 +79,8 @@ export const getDashboardData = async (
                 id: user._id,
                 fullName: user.full_name,
                 role: user.role,
+                referralLink: referral?.link || "",
+                referralCount: referral?.successful_referrals || 0,
             },
             wallet: {
                 balance: wallet?.balance || 0,

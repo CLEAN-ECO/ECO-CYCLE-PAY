@@ -25,7 +25,6 @@ const referralSchema = new Schema<IReferral>({
         required: [true, "Referral code is required"],
         unique: true,
         trim: true,
-        uppercase: true,
     },
     link: {
         type: String,

@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { validationResult } from "express-validator";
-import { Types } from "mongoose";
-import User from "../models/user";
+import { ObjectId, Types } from "mongoose";
+import User, { IHubUser } from "../models/user";
 import Wallet from "../models/wallet";
 import Referral from "../models/referral";
 import { logger } from "../utils/logger";
@@ -16,6 +16,7 @@ import {
     sendValidationErrors,
     sendInternalError,
 } from "../utils/responseHelper";
+import CollectionHub from "../models/collectionHub";
 
 const { JWT_SECRET } = process.env;
 
@@ -46,40 +47,61 @@ const generateOTP = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Generate a random recovery phrase (in production, use a proper BIP39 library)
+// Generate a random recovery phrase
 const generateSecretPhrase = (): string[] => {
     const words = [
-        "abandon",
-        "ability",
-        "able",
-        "about",
-        "above",
-        "abroad",
-        "absence",
-        "absolute",
-        "absorb",
-        "abstract",
-        "absurd",
-        "access",
-        "accident",
-        "account",
-        "accuse",
-        "achieve",
-        "acid",
-        "acoustic",
-        "acquire",
-        "across",
-        "act",
+        "green",
+        "wallet",
+        "planet",
+        "plastic",
+        "future",
+        "bottle",
+        "reward",
+        "pickup",
+        "forest",
+        "impact",
+        "carbon",
+        "energy",
+        "clean",
+        "market",
+        "supply",
+        "vendor",
+        "earth",
+        "solar",
+        "river",
+        "paper",
+        "metal",
+        "cycle",
+        "secure",
+        "profit",
+        "growth",
+        "hub",
+        "mission",
+        "nature",
+        "points",
+        "value",
+        "community",
+        "change",
         "action",
-        "active",
-        "activity",
-        "actor",
-        "actress",
-        "actual",
-        "actuate",
-        "acuate",
-        "acute",
-        "acutely",
+        "sustain",
+        "eco",
+        "friendly",
+        "zero",
+        "waste",
+        "reduce",
+        "reuse",
+        "recycle",
+        "compost",
+        "greenhouse",
+        "emission",
+        "offset",
+        "biodiversity",
+        "conservation",
+        "wildlife",
+        "ocean",
+        "cleaner",
+        "air",
+        "soil",
     ];
     const phrase: string[] = [];
     for (let i = 0; i < 12; i++) {
@@ -108,6 +130,7 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
             vendor_business_type,
             vendor_location,
             vendor_years,
+            vendor_registration,
             ngo_hub_type,
             ngo_name,
             ngo_registration,
@@ -127,17 +150,19 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
             return sendBadRequest(res, "Passwords do not match");
         }
 
-        // Check if email already exists
-        const existingUser = await User.findOne({ email: (email as string).toLowerCase() });
+        // Check if email or phone already exists
+        const existingUser = await User.findOne({
+            $or: [{ email: (email as string).toLowerCase() }, { phone: (phone as string).trim() }],
+        }).lean();
         if (existingUser) {
-            return sendConflict(res, "Email already registered");
+            return sendConflict(res, "Email or phone number already registered");
         }
 
         // Validate referral code if provided
         let referredById: string | undefined;
         if (referral_code) {
             const referralDoc = await Referral.findOne({
-                referral_code: (referral_code as string).toUpperCase(),
+                code: (referral_code as string).trim(),
                 is_active: true,
             });
 
@@ -164,16 +189,52 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
         };
 
         // Add role-specific fields
-        if (role === "generator" && generator_subtype) {
+        if (role === "generator") {
+            if (!generator_subtype) {
+                return sendBadRequest(res, "Generator subtype is required");
+            }
+
             userData.generator_subtype = generator_subtype;
         } else if (role === "vendor") {
+            if (
+                !vendor_business_name ||
+                !vendor_business_type ||
+                !vendor_location ||
+                !vendor_years ||
+                !vendor_registration
+            ) {
+                return sendBadRequest(
+                    res,
+                    "All vendor business details are required (name, type, location, years, registration)",
+                );
+            }
+
             userData.vendor_business_name = vendor_business_name;
             userData.vendor_business_type = vendor_business_type;
             userData.vendor_location = vendor_location;
             userData.vendor_years = vendor_years;
+            userData.vendor_registration = vendor_registration;
         } else if (role === "ngo-hub") {
+            if (!ngo_hub_type) {
+                return sendBadRequest(res, "NGO/Hub type is required");
+            }
+
             userData.ngo_hub_type = ngo_hub_type;
             if (ngo_hub_type === "NGO") {
+                if (
+                    !ngo_name ||
+                    !ngo_registration ||
+                    !ngo_years ||
+                    !ngo_focus ||
+                    !ngo_location ||
+                    !ngo_mission
+                ) {
+                    return sendBadRequest(
+                        res,
+                        "All NGO details are required (name, registration, years, focus, location, mission)",
+                    );
+                }
+
                 userData.ngo_name = ngo_name;
                 userData.ngo_registration = ngo_registration;
                 userData.ngo_years = ngo_years;
@@ -181,6 +242,19 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
                 userData.ngo_location = ngo_location;
                 userData.ngo_mission = ngo_mission;
             } else if (ngo_hub_type === "Hub") {
+                if (
+                    !hub_name ||
+                    !hub_capacity ||
+                    !hub_location ||
+                    !hub_availability ||
+                    !hub_description
+                ) {
+                    return sendBadRequest(
+                        res,
+                        "All Hub details are required (name, capacity, location, availability, description)",
+                    );
+                }
+
                 userData.hub_name = hub_name;
                 userData.hub_capacity = hub_capacity;
                 userData.hub_location = hub_location;
@@ -263,16 +337,28 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
         });
         await wallet.save();
 
+        // Create collection hub if user is Hub
+        if (user.role === "ngo-hub" && (user as IHubUser).ngo_hub_type === "Hub") {
+            const collectionHub = new CollectionHub({
+                manager: user._id,
+                name: (user as IHubUser)?.hub_name,
+                capacity: (user as IHubUser)?.hub_capacity,
+                location: (user as IHubUser)?.hub_location,
+                availability: (user as IHubUser)?.hub_availability,
+                description: (user as IHubUser)?.hub_description,
+            });
+            await collectionHub.save();
+        }
+
         // Generate unique referral code
-        const referralCode = `ref${user._id.toString().slice(-12).toUpperCase()}`;
+        const referralCode = `ref${user.email.split("@")[0]}`;
         const referralLink = `${process.env.FRONTEND_URL || "https://ecocyclepay.com"}/signup?ref=${referralCode}`;
 
         // Create referral for user
         const referral = new Referral({
             user: user._id,
-            referral_code: referralCode,
-            referral_link: referralLink,
-            bonus_amount: 500,
+            code: referralCode,
+            link: referralLink,
         });
         await referral.save();
 
@@ -280,8 +366,8 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
         if (user.referred_by) {
             const referrerWallet = await Wallet.findOne({ user: user.referred_by });
             if (referrerWallet) {
-                referrerWallet.balance += 500;
-                referrerWallet.total_earned += 500;
+                referrerWallet.balance += 50;
+                referrerWallet.total_earned += 50;
                 referrerWallet.last_transaction_date = new Date();
                 await referrerWallet.save();
 
@@ -289,7 +375,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
                 await Referral.updateOne(
                     { user: user.referred_by },
                     {
-                        $inc: { successful_referrals: 1, total_earnings: 500 },
+                        $inc: { successful_referrals: 1, total_earnings: 50, clicks: 1 },
                     },
                 );
 
@@ -423,6 +509,12 @@ export const setupWallet = async (req: Request, res: Response): Promise<Response
         if (!user) {
             return sendNotFound(res, "User not found");
         }
+
+        // Update wallet with secret phrase
+        await Wallet.findOneAndUpdate(
+            { user: userId as unknown as ObjectId },
+            { secret_phrase: walletData.secretPhrase, pin: wallet_pin as unknown as number },
+        );
 
         logger(`Wallet setup completed for user: ${userId}`, "info");
 
@@ -563,5 +655,15 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     } catch (error) {
         logger(`Login error: ${error}`, "error");
         return sendInternalError(res, error instanceof Error ? error.message : "Failed to login");
+    }
+};
+
+export const logout = async (_req: Request, res: Response): Promise<Response> => {
+    try {
+        // Invalidate token on client side (JWT is stateless)
+        return sendSuccess(res, "Logout successful");
+    } catch (error) {
+        logger(`Logout error: ${error}`, "error");
+        return sendInternalError(res, error instanceof Error ? error.message : "Failed to logout");
     }
 };
