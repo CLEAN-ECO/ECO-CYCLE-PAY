@@ -192,23 +192,23 @@ const feedback = {
   }
 };
 
-const api = async (url, { method = 'GET', body, auth = true, useTemp = false } = {}) => {
+const api = async (url, { method = 'GET', body, auth = true, useTemp = false, timeout = 30000 } = {}) => {
   const headers = { 'Content-Type': 'application/json' };
   if (auth && token()) headers.Authorization = `Bearer ${token()}`;
   if (useTemp && tempToken()) headers.Authorization = `Bearer ${tempToken()}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = timeout ? setTimeout(() => controller.abort(), timeout) : null;
   let response;
   try {
     response = await fetch(`${apiBase}${url}`, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
   } catch (error) {
-    clearTimeout(timeout);
+    if (timeoutId) clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('The server took too long to respond. Make sure `npm start` is running on `http://localhost:3000`.');
+      throw new Error('Request timeout. The server took too long to respond.');
     }
-    throw new Error(window.location.protocol === 'file:' ? 'Open the app through the backend server, not as a local file. Run `npm start` and use `http://localhost:3000`.' : 'Could not reach the server. Make sure `npm start` is running.');
+    throw new Error(window.location.protocol === 'file:' ? 'Open the app through the backend server, not as a local file. Run `npm start` and use `http://localhost:3000`.' : 'Could not reach the server. Make sure the backend server is running.');
   }
-  clearTimeout(timeout);
+  if (timeoutId) clearTimeout(timeoutId);
   const raw = await response.text();
   let data = {};
   try {
