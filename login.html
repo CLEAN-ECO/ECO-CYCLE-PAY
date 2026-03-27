@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Pay | Login</title>
+    <meta
+        name="description"
+        content="Log in to EcoCycle Pay and continue your recycling journey."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="assets/styles/style.css">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-shell auth-shell-login">
+            <div class="auth-intro">
+                <a href="index.html" class="back-link">Back to Home</a>
+                <p class="signup-eyebrow">Welcome back</p>
+                <h1>Sign in to your EcoCycle Pay account</h1>
+                <p class="signup-copy">
+                    Access your wallet, recycling activity, and role-specific dashboard in one place.
+                </p>
+            </div>
+
+            <div class="auth-card">
+                <div class="panel-header">
+                    <h2>Login</h2>
+                    <p>Use your email or phone number and password to continue.</p>
+                </div>
+
+                <form id="loginForm" class="auth-form" novalidate>
+                    <label class="field">
+                        <span>Email or Phone</span>
+                        <input type="text" name="identifier" placeholder="Enter email or phone" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Password</span>
+                        <div class="password-input-wrap">
+                            <input type="password" name="password" id="loginPassword" placeholder="Enter password" required>
+                            <button type="button" class="toggle-password" id="toggleLoginPassword">Show</button>
+                        </div>
+                    </label>
+
+                    <p class="form-message" id="loginMessage" hidden></p>
+                    <button type="submit" class="btn btn-primary form-submit">Login</button>
+                </form>
+
+                <p class="form-footer">
+                    New to EcoCycle Pay?
+                    <a href="signup.html">Create an account</a>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
