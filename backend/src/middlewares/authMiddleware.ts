@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { sendUnauthorized } from "../utils/responseHelper";
+import { ObjectId } from "mongoose";
 
 const { JWT_SECRET } = process.env as unknown as Record<string, string>;
 
 interface UserPayload {
-    userId: string;
+    userId: ObjectId;
     email: string;
     role?: string;
 }
