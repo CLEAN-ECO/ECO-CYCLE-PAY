@@ -308,6 +308,16 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
         const secretPhrase = generateSecretPhrase();
         const phraseExpiryTime = Date.now() + 60 * 60 * 1000; // 1 hour
 
+        // Generate 3 random positions to confirm (0-11)
+        const confirmPositions: number[] = [];
+        while (confirmPositions.length < 3) {
+            const pos = Math.floor(Math.random() * 12);
+            if (!confirmPositions.includes(pos)) {
+                confirmPositions.push(pos);
+            }
+        }
+        confirmPositions.sort((a, b) => a - b);
+
         // Store wallet setup data temporarily
         walletSetupStore.set(user._id.toString(), {
             userId: user._id.toString(),
@@ -321,8 +331,9 @@ export const verifyEmail = async (req: Request, res: Response): Promise<Response
         return sendSuccess(res, "Email verified successfully", {
             tempToken,
             userId: user._id,
+            confirmPositions,
             // In development, return secret phrase for testing (remove in production)
-            ...(process.env.NODE_ENV === "development" && { secretPhrase }),
+            ...(process.env.NODE_ENV === "development" && { phrase: secretPhrase }),
         });
     } catch (error) {
         logger(`Email verification error: ${error}`, "error");

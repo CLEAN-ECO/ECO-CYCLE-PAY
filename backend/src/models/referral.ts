@@ -2,8 +2,8 @@ import { Schema, Document, model } from "mongoose";
 
 interface IReferral extends Document {
     user: Schema.Types.ObjectId; // User who owns this referral
-    referral_code: string;
-    referral_link: string;
+    code: string;
+    link: string;
     bonus_amount: number; // ₦ per successful referral
     clicks: number; // Number of times link was clicked
     successful_referrals: number; // Number of successful signups using this code
@@ -20,14 +20,14 @@ const referralSchema = new Schema<IReferral>({
         required: [true, "User is required"],
         unique: true,
     },
-    referral_code: {
+    code: {
         type: String,
         required: [true, "Referral code is required"],
         unique: true,
         trim: true,
         uppercase: true,
     },
-    referral_link: {
+    link: {
         type: String,
         required: [true, "Referral link is required"],
     },

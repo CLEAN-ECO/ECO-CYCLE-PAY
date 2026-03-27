@@ -1,10 +1,19 @@
 import { Schema, Document, model } from "mongoose";
 
-type WasteType = "plastic" | "metal" | "glass" | "paper" | "organic" | "electronics" | "mixed";
+type WasteType =
+    | "Plastics"
+    | "Papers"
+    | "Metals"
+    | "Beverage Cans"
+    | "Cartons"
+    | "Glass"
+    | "Electronics"
+    | "Organic"
+    | "Mixed";
 
 type ListingStatus = "available" | "pending" | "sold_out" | "expired";
 
-interface IWasteSupply extends Document {
+export interface IWasteSupply extends Document {
     generator: Schema.Types.ObjectId;
     waste_type: WasteType;
     quantity: number; // in kg
@@ -29,7 +38,17 @@ const wasteSupplySchema = new Schema<IWasteSupply>(
         waste_type: {
             type: String,
             enum: {
-                values: ["plastic", "metal", "glass", "paper", "organic", "electronics", "mixed"],
+                values: [
+                    "Plastics",
+                    "Papers",
+                    "Metals",
+                    "Beverage Cans",
+                    "Cartons",
+                    "Glass",
+                    "Electronics",
+                    "Organic",
+                    "Mixed",
+                ],
                 message: "Invalid waste type",
             },
             required: [true, "Waste type is required"],
@@ -48,7 +67,10 @@ const wasteSupplySchema = new Schema<IWasteSupply>(
             type: String,
             required: [true, "Location is required"],
         },
-        description: String,
+        description: {
+            type: String,
+            trim: true,
+        },
         status: {
             type: String,
             enum: {
@@ -65,7 +87,9 @@ const wasteSupplySchema = new Schema<IWasteSupply>(
             type: Date,
             default: Date.now,
         },
-        expiry_date: Date,
+        expiry_date: {
+            type: Date,
+        },
     },
     {
         timestamps: {

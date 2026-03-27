@@ -1,10 +1,9 @@
 import { Response } from "express";
 import User from "../models/user";
-import Wallet, { IWallet } from "../models/wallet";
+import Wallet from "../models/wallet";
 import Activity from "../models/activity";
-import Order from "../models/order";
-import Pickup from "../models/pickup";
-import WasteSupply from "../models/wasteSupply";
+import Pickup, { IPickup } from "../models/pickup";
+// import WasteSupply, { IWasteSupply } from "../models/wasteSupply";
 import {
     sendSuccess,
     sendUnauthorized,
@@ -13,7 +12,8 @@ import {
 } from "../utils/responseHelper";
 import { logger } from "../utils/logger";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
-import { ObjectId } from "mongoose";
+import Transaction, { ITransaction } from "../models/transaction";
+import WasteSubmission, { IWasteSubmission } from "../models/wasteSubmission";
 
 /**
  * Get dashboard data based on user role
@@ -23,6 +23,7 @@ export const getDashboardData = async (
     req: AuthenticatedRequest,
     res: Response,
 ): Promise<Response> => {
+    logger(`Dashboard request from user ${req.user?.userId}`, "info");
     try {
         const userId = req.user?.userId;
 
@@ -37,46 +38,63 @@ export const getDashboardData = async (
         }
 
         // Get wallet details
-        const wallet = await Wallet.findOne({ userId });
+        const wallet = await Wallet.findOne({ user: userId });
 
-        // Get recent activities (last 5)
-        const activities = await Activity.find({ userId }).sort({ created_at: -1 }).limit(5).lean();
+        // Get pickups based on user role
+        let pickups: IPickup[] = [];
+        if (user.role === "generator") {
+            pickups = await Pickup.find({ requester: userId }).lean();
+        } else if (user.role === "ngo-hub") {
+            pickups = await Pickup.find({ collector: userId }).lean();
+        }
 
-        // Role-specific dashboard data
-        let dashboardData: Record<string, unknown> = {
+        // Get waste submission uploads (generators can submit)
+        const uploads = await WasteSubmission.find({ user: userId }).lean();
+
+        // Get transactions (from Activity model)
+        const transactions = await Transaction.find({ user: userId })
+            .sort({ created_at: -1 })
+            .lean();
+
+        // Dashboard data response
+        const dashboardData = {
             user: {
-                name: user.full_name,
-                email: user.email,
+                id: user._id,
+                fullName: user.full_name,
                 role: user.role,
             },
-            wallet: wallet
-                ? {
-                      balance: wallet.balance,
-                      total_earned: wallet.total_earned,
-                      total_withdrawn: wallet.total_withdrawn,
-                  }
-                : {
-                      balance: 0,
-                      total_earned: 0,
-                      total_withdrawn: 0,
-                  },
-            recent_activities: activities.map((activity) => ({
-                title: activity.title,
-                description: activity.description,
-                status: activity.status,
-                created_at: activity.created_at,
+            wallet: {
+                balance: wallet?.balance || 0,
+            },
+            pickups: pickups.map((p: IPickup) => ({
+                userId: user.role === "generator" ? p.requester : p.collector,
+                wasteType: p.waste_type,
+                quantity: p.quantity,
+                location: p.pickup_location,
+                status: p.status,
+                createdAt: p.created_at,
+            })),
+            uploads: uploads.map((u: IWasteSubmission) => ({
+                userId: u.user,
+                wasteType: u.waste_type,
+                quantity: u.quantity,
+                location: u.location,
+                status: u.status,
+                createdAt: u.created_at,
+            })),
+            transactions: transactions.map((t: ITransaction) => ({
+                userId: t.user,
+                type: t.type,
+                amount: t.amount,
+                status: t.status,
+                createdAt: t.created_at,
             })),
         };
 
-        // Add role-specific data
-        if (user.role === "generator") {
-            dashboardData = await getGeneratorDashboard(userId, wallet, dashboardData);
-        } else if (user.role === "vendor") {
-            dashboardData = await getVendorDashboard(userId, dashboardData);
-        } else if (user.role === "ngo-hub") {
-            dashboardData = await getNGOHubDashboard(userId, dashboardData);
-        }
-
+        logger(
+            `Dashboard data for user ${userId} (${user.role}): pickups=${dashboardData.pickups.length}, uploads=${dashboardData.uploads.length}, transactions=${dashboardData.transactions.length}`,
+            "info",
+        );
         return sendSuccess(res, "Dashboard data retrieved successfully", dashboardData);
     } catch (error) {
         logger(`Dashboard error: ${error}`, "error");
@@ -86,152 +104,6 @@ export const getDashboardData = async (
         );
     }
 };
-
-/**
- * Generator-specific dashboard data
- */
-async function getGeneratorDashboard(
-    userId: ObjectId,
-    wallet: IWallet | null,
-    baseData: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-    const pickupRequests = await Pickup.countDocuments({
-        requester_id: userId,
-        status: { $in: ["requested", "accepted", "scheduled"] },
-    });
-
-    const wasteListings = await WasteSupply.countDocuments({
-        generator_id: userId,
-        status: "available",
-    });
-
-    const totalCollected = await WasteSupply.aggregate([
-        { $match: { generator_id: userId, status: "sold_out" } },
-        { $group: { _id: null, total: { $sum: "$quantity" } } },
-    ]);
-
-    // Calculate trend (dummy calculation - compare with previous week)
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const weekEarnings = await Activity.aggregate([
-        {
-            $match: {
-                userId: userId,
-                created_at: { $gte: weekAgo },
-                type: { $in: ["withdrawal", "order_approved"] },
-            },
-        },
-        { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-
-    return {
-        ...baseData,
-        stats: {
-            active_pickups: pickupRequests,
-            available_waste: wasteListings,
-            total_collected_kg: totalCollected[0]?.total || 0,
-        },
-        wallet_trend: wallet
-            ? ((weekEarnings[0]?.total || 0) / (wallet.total_earned || 1)) * 100
-            : 0,
-    };
-}
-
-/**
- * Vendor-specific dashboard data
- */
-async function getVendorDashboard(
-    userId: ObjectId,
-    baseData: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-    const ordersReceived = await Order.countDocuments({
-        vendor_id: userId,
-    });
-
-    const pendingOrders = await Order.countDocuments({
-        vendor_id: userId,
-        status: "pending",
-    });
-
-    const totalOrderValue = await Order.aggregate([
-        { $match: { vendor_id: userId, status: { $ne: "cancelled" } } },
-        { $group: { _id: null, total: { $sum: "$estimated_value" } } },
-    ]);
-
-    const availableWaste = await WasteSupply.aggregate([
-        { $match: { status: "available" } },
-        { $group: { _id: null, total: { $sum: "$quantity" } } },
-    ]);
-
-    return {
-        ...baseData,
-        stats: {
-            orders_received: ordersReceived,
-            pending_orders: pendingOrders,
-            available_waste_supply_kg: availableWaste[0]?.total || 0,
-            total_order_value: totalOrderValue[0]?.total || 0,
-        },
-    };
-}
-
-/**
- * NGO/Hub-specific dashboard data
- */
-async function getNGOHubDashboard(
-    userId: ObjectId,
-    baseData: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-    const totalCollected = await Pickup.aggregate([
-        {
-            $match: {
-                collector_id: userId,
-                status: "completed",
-            },
-        },
-        { $group: { _id: null, total: { $sum: "$quantity" } } },
-    ]);
-
-    const activePickups = await Pickup.countDocuments({
-        collector_id: userId,
-        status: { $in: ["accepted", "scheduled", "in_transit"] },
-    });
-
-    const plasticCollected = await Pickup.aggregate([
-        {
-            $match: {
-                collector_id: userId,
-                waste_type: "plastic",
-                status: "completed",
-            },
-        },
-        { $group: { _id: null, total: { $sum: "$quantity" } } },
-    ]);
-
-    const earnings = await Activity.aggregate([
-        {
-            $match: {
-                userId: userId,
-                type: "collection_accepted",
-            },
-        },
-        { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-
-    const activeRequests = await Pickup.countDocuments({
-        collector_id: userId,
-        status: "requested",
-    });
-
-    return {
-        ...baseData,
-        stats: {
-            total_waste_collected_kg: totalCollected[0]?.total || 0,
-            active_pickups: activePickups,
-            plastic_collected_kg: plasticCollected[0]?.total || 0,
-            total_earnings: earnings[0]?.total || 0,
-            active_requests: activeRequests,
-        },
-    };
-}
 
 /**
  * Get user activities with pagination

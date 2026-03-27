@@ -5,18 +5,19 @@ The frontend of ECO-CYCLE-PAY is a responsive web application built with vanilla
 ## Project Structure
 
 ```
-frontend/
-├── src/                          # HTML source files
-│   ├── index.html               # Landing page
-│   ├── login.html               # User login page
-│   ├── signup.html              # User registration page
-│   ├── dashboard.html           # Main user dashboard
-│   ├── dashboard-ngo.html       # NGO-specific dashboard
-│   ├── dashboard-vendor.html    # Vendor-specific dashboard
-│   ├── wallet.html              # Wallet management page
-│   ├── submit.html              # Submission form page
-│   └── verify.html              # Verification page
-│
+frontend/                    # HTML source files
+├── index.html               # Landing page
+├── login.html               # User login page
+├── signup.html              # User registration page
+├── dashboard.html           # Main user dashboard
+├── dashboard-ngo.html       # NGO-specific dashboard
+├── dashboard-vendor.html    # Vendor-specific dashboard
+├── wallet.html              # Wallet management page
+├── submit.html              # Submission form page
+├── verify.html              # Verification page
+├── manage-orders.html       # Order management page
+├── profile.html             # User profile page
+├── upload.html              # Upload page for item verification
 └── assets/                       # Static assets
     ├── js/                       # JavaScript functionality
     │   ├── app.js               # Main application logic
@@ -28,7 +29,7 @@ frontend/
 
 ## File Descriptions
 
-### HTML Pages (`src/`)
+### HTML Pages
 
 | File | Purpose |
 |------|---------|
@@ -41,6 +42,9 @@ frontend/
 | **wallet.html** | Wallet interface for viewing balance and transactions |
 | **submit.html** | Form for submitting eco-cycle items or data |
 | **verify.html** | Verification interface for two-factor authentication or item verification |
+| **manage-orders.html** | Interface for managing orders and transactions |
+| **profile.html** | User profile management page |
+| **upload.html** | Page for uploading images or data for verification |
 
 ### JavaScript Assets (`assets/js/`)
 
@@ -103,13 +107,13 @@ npx http-server
 Simply open any HTML file directly in your browser:
 ```bash
 # Windows
-start src/index.html
+start index.html
 
 # macOS
-open src/index.html
+open index.html
 
 # Linux
-xdg-open src/index.html
+xdg-open index.html
 ```
 
 ## Browser Compatibility
@@ -140,10 +144,10 @@ xdg-open src/index.html
 All asset references should be relative paths:
 ```html
 <!-- CSS -->
-<link rel="stylesheet" href="../assets/styles/style.css">
+<link rel="stylesheet" href="assets/styles/style.css">
 
 <!-- JavaScript -->
-<script src="../assets/js/app.js"></script>
+<script src="assets/js/app.js"></script>
 ```
 
 ## Feature Areas
@@ -162,6 +166,10 @@ All asset references should be relative paths:
 - **Wallet** (`wallet.html`) - Balance view and transaction history
 - **Submit** (`submit.html`) - Submit eco-cycle items
 - **Camera** (`camera.js`) - QR code/item scanning functionality
+- **Manage Orders** (`manage-orders.html`) - View and manage orders
+- **Profile** (`profile.html`) - User profile management
+- **Upload** (`upload.html`) - Upload images/data for verification
+- **Verification** (`verify.html`) - Item and user verification processes
 
 ## Connecting to Backend
 
@@ -182,20 +190,20 @@ Refer to the [Backend README](../backend/README.md) for API endpoints documentat
 
 ### Adding a New Page
 
-1. Create a new HTML file in `src/`:
+1. Create a new HTML file:
    ```html
-   <!-- src/new-page.html -->
+   <!-- new-page.html -->
    <!DOCTYPE html>
    <html lang="en">
    <head>
        <meta charset="UTF-8">
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <title>Page Title</title>
-       <link rel="stylesheet" href="../assets/styles/style.css">
+       <link rel="stylesheet" href="assets/styles/style.css">
    </head>
    <body>
        <!-- Content -->
-       <script src="../assets/js/app.js"></script>
+       <script src="assets/js/app.js"></script>
    </body>
    </html>
    ```

@@ -6,9 +6,14 @@ import {
     getNearestHubs,
     assignHubAndSchedulePickup,
     getUserSubmissions,
+    requestPickup,
 } from "../controllers/waste";
 import { verifyToken } from "../middlewares/authMiddleware";
-import { validateWasteSubmission, validateSchedulePickup } from "../middlewares/wasteValidation";
+import {
+    validateWasteSubmission,
+    validateSchedulePickup,
+    validatePickupRequest,
+} from "../middlewares/wasteValidation";
 
 const wasteRouter = Router();
 
@@ -70,6 +75,64 @@ wasteRouter.use(verifyToken);
 
 /**
  * @swagger
+ * /api/v1/waste/pickup:
+ *   post:
+ *     summary: Request a pickup for waste
+ *     description: Create a new pickup request for waste collection
+ *     tags:
+ *       - Waste
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - wasteType
+ *               - quantity
+ *               - location
+ *               - pickupTime
+ *          properties:
+ *            wasteType:
+ *              type: string
+ *              enum:
+ *                - Plastics
+ *                - Papers
+ *                - Metals
+ *                - Beverage Cans
+ *                - Cartons
+ *                - Glass
+ *                - Electronics
+ *                - Organic
+ *                - Mixed
+ *            quantity:
+ *              type: number
+ *              example: 5.2
+ *              description: Weight in kg
+ *            location:
+ *              type: string
+ *              description: Location for pickup
+ *            pickupTime:
+ *              type: string
+ *              format: date-time
+ *              description: Scheduled date for pickup
+ *            notes:
+ *              type: string
+ *              description: Optional notes
+ *     responses:
+ *       201:
+ *         description: Pickup request created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
+wasteRouter.post("/pickup", validatePickupRequest(), requestPickup);
+
+/**
+ * @swagger
  * /api/v1/waste/submit:
  *   post:
  *     summary: Submit waste for processing
@@ -85,25 +148,29 @@ wasteRouter.use(verifyToken);
  *           schema:
  *             type: object
  *             required:
- *               - waste_type
+ *               - wasteType
  *               - quantity
+ *               - location
  *             properties:
- *               waste_type:
+ *               wasteType:
  *                 type: string
  *                 enum:
- *                   - plastic
- *                   - paper
- *                   - metal
- *                   - beverage_cans
- *                   - cartons
- *                   - glass
- *                   - electronics
- *                   - organic
- *                   - mixed
+ *                   - Plastics
+ *                   - Papers
+ *                   - Metals
+ *                   - Beverage Cans
+ *                   - Cartons
+ *                   - Glass
+ *                   - Electronics
+ *                   - Organic
+ *                   - Mixed
  *               quantity:
  *                 type: number
  *                 example: 5.2
  *                 description: Weight in kg
+ *               location:
+ *                 type: string
+ *                 description: Location for waste submission
  *               description:
  *                 type: string
  *                 description: Optional description

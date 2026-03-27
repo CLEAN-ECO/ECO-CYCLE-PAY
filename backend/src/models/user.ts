@@ -144,20 +144,21 @@ interface IUserCommon extends Document {
 }
 
 // Waste Generator specific fields
-interface IGeneratorUser extends IUserCommon {
+export interface IGeneratorUser extends IUserCommon {
     generator_subtype?: GeneratorSubtype;
 }
 
 // Vendor specific fields
-interface IVendorUser extends IUserCommon {
+export interface IVendorUser extends IUserCommon {
     vendor_business_name?: string;
     vendor_business_type?: string;
     vendor_location?: string;
     vendor_years?: number;
+    vendor_registration?: string;
 }
 
 // NGO specific fields
-interface INGOUser extends IUserCommon {
+export interface INGOUser extends IUserCommon {
     ngo_hub_type?: "NGO";
     ngo_name?: string;
     ngo_registration?: string;
@@ -168,7 +169,7 @@ interface INGOUser extends IUserCommon {
 }
 
 // Hub specific fields
-interface IHubUser extends IUserCommon {
+export interface IHubUser extends IUserCommon {
     ngo_hub_type?: "Hub";
     hub_name?: string;
     hub_capacity?: number; // kg/day
@@ -255,6 +256,7 @@ const userSchema = new Schema<IUser>(
         vendor_business_type: String,
         vendor_location: String,
         vendor_years: Number,
+        vendor_registration: String,
 
         // NGO-specific fields
         ngo_hub_type: {

@@ -4,19 +4,19 @@ import { body, ValidationChain } from "express-validator";
  * Validation for submitting waste
  */
 export const validateWasteSubmission = (): ValidationChain[] => [
-    body("waste_type")
+    body("wasteType")
         .notEmpty()
         .withMessage("Waste type is required")
         .isIn([
-            "plastic",
-            "paper",
-            "metal",
-            "beverage_cans",
-            "cartons",
-            "glass",
-            "electronics",
-            "organic",
-            "mixed",
+            "Plastics",
+            "Papers",
+            "Metals",
+            "Beverage Cans",
+            "Cartons",
+            "Glass",
+            "Electronics",
+            "Organic",
+            "Mixed",
         ])
         .withMessage("Invalid waste type"),
     body("quantity")
@@ -24,6 +24,7 @@ export const validateWasteSubmission = (): ValidationChain[] => [
         .withMessage("Quantity is required")
         .isFloat({ min: 0.1 })
         .withMessage("Quantity must be at least 0.1 kg"),
+    body("location").notEmpty().withMessage("Location is required"),
     body("description").optional().isString().trim(),
 ];
 
@@ -62,4 +63,37 @@ export const validateWithdrawal = (): ValidationChain[] => [
         .withMessage("Bank code is required")
         .isLength({ min: 3, max: 6 })
         .withMessage("Invalid bank code"),
+];
+
+/**
+ * Validation for pickup request
+ */
+export const validatePickupRequest = (): ValidationChain[] => [
+    body("wasteType")
+        .notEmpty()
+        .withMessage("Waste type is required")
+        .isIn([
+            "Plastics",
+            "Metals",
+            "Beverage Cans",
+            "Papers",
+            "Cartons",
+            "Glass",
+            "Organic",
+            "Electronics",
+            "Mixed",
+        ])
+        .withMessage("Invalid waste type"),
+    body("quantity")
+        .notEmpty()
+        .withMessage("Quantity is required")
+        .isFloat({ min: 0.1 })
+        .withMessage("Quantity must be at least 0.1 kg"),
+    body("location").notEmpty().withMessage("Pickup location is required"),
+    body("pickupTime")
+        .notEmpty()
+        .withMessage("Pickup time is required")
+        .isISO8601()
+        .withMessage("Invalid date format"),
+    body("notes").optional().isString().trim(),
 ];

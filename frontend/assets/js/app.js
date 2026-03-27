@@ -4,7 +4,8 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const SESSION = {
   token: 'eco_auth_token',
   theme: 'eco_theme',
-  pendingId: 'eco_pending_signup_id',
+  tempToken: 'eco_temp_signup_token',
+  email: 'eco_signup_email',
   phrase: 'eco_pending_phrase_data'
 };
 
@@ -15,13 +16,20 @@ const state = {
 
 const token = () => localStorage.getItem(SESSION.token) || '';
 const setToken = value => value ? localStorage.setItem(SESSION.token, value) : localStorage.removeItem(SESSION.token);
+const tempToken = () => sessionStorage.getItem(SESSION.tempToken) || '';
+const setTempToken = value => value ? sessionStorage.setItem(SESSION.tempToken, value) : sessionStorage.removeItem(SESSION.tempToken);
+const setSignupEmail = value => sessionStorage.setItem(SESSION.email, value);
+const getSignupEmail = () => sessionStorage.getItem(SESSION.email) || '';
 const setTheme = value => localStorage.setItem(SESSION.theme, value);
 const getTheme = () => localStorage.getItem(SESSION.theme) || 'light';
 const apiBase = (() => {
   const { protocol, hostname, port } = window.location;
-  if (protocol === 'file:') return 'http://localhost:3000';
-  if ((hostname === 'localhost' || hostname === '127.0.0.1') && port && port !== '3000') return 'http://localhost:3000';
-  return '';
+  // If opened as file, connect to backend on port 5000
+  if (protocol === 'file:') return 'http://localhost:5000';
+  // If on localhost:5500 (or :3000 or any dev port), connect to backend on port 5000
+  if ((hostname === 'localhost' || hostname === '127.0.0.1') && port) return 'http://localhost:5000';
+  // Production: use relative paths or full URL
+  return 'https://eco-cycle-pay.onrender.com';
 })();
 
 const fmtMoney = n => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -184,9 +192,10 @@ const feedback = {
   }
 };
 
-const api = async (url, { method = 'GET', body, auth = true } = {}) => {
+const api = async (url, { method = 'GET', body, auth = true, useTemp = false } = {}) => {
   const headers = { 'Content-Type': 'application/json' };
   if (auth && token()) headers.Authorization = `Bearer ${token()}`;
+  if (useTemp && tempToken()) headers.Authorization = `Bearer ${tempToken()}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   let response;
@@ -231,7 +240,18 @@ const syncBackLinks = () => {
 const renderPhrase = payload => {
   const grid = $('#secretPhraseGrid');
   const confirmGrid = $('#confirmWordsGrid');
-  if (!grid || !confirmGrid || !payload) return;
+  if (!grid || !confirmGrid || !payload) {
+    console.error('renderPhrase error: Missing grid or payload', { grid, confirmGrid, payload });
+    return;
+  }
+  if (!payload.phrase || !Array.isArray(payload.phrase)) {
+    console.error('renderPhrase error: phrase is missing or not an array', payload);
+    return;
+  }
+  if (!payload.confirmPositions || !Array.isArray(payload.confirmPositions)) {
+    console.error('renderPhrase error: confirmPositions is missing or not an array', payload);
+    return;
+  }
   grid.innerHTML = payload.phrase.map((word, index) => `<div class="phrase-word"><span>${index + 1}</span><strong>${word}</strong></div>`).join('');
   confirmGrid.innerHTML = payload.confirmPositions.map(pos => `<label class="field"><span>Confirm word #${pos + 1}</span><input type="text" name="confirm_word_${pos}" required></label>`).join('');
 };
@@ -240,11 +260,9 @@ const readPendingPhrase = () => {
   try { return JSON.parse(sessionStorage.getItem(SESSION.phrase) || 'null'); } catch { return null; }
 };
 
-const readPendingId = () => sessionStorage.getItem(SESSION.pendingId) || '';
-
-const setPendingSignup = (pendingId, phraseData = null) => {
-  if (pendingId) sessionStorage.setItem(SESSION.pendingId, pendingId);
-  else sessionStorage.removeItem(SESSION.pendingId);
+const setPendingSignup = (email, phraseData = null) => {
+  if (email) setSignupEmail(email);
+  else sessionStorage.removeItem(SESSION.email);
   if (phraseData) sessionStorage.setItem(SESSION.phrase, JSON.stringify(phraseData));
   else sessionStorage.removeItem(SESSION.phrase);
 };
@@ -258,8 +276,8 @@ const setStep = (steps, current) => steps.forEach(step => {
 const loadMe = async () => {
   if (!token()) return null;
   try {
-    const data = await api('/api/me');
-    state.me = data.user;
+    const data = await api('/api/v1/user/me');
+    state.me = data.data;
     syncBackLinks();
     return state.me;
   } catch {
@@ -270,18 +288,21 @@ const loadMe = async () => {
 };
 
 const loadAppData = async () => {
-  const data = await api('/api/app-data');
-  state.me = data.user;
-  state.appData = data;
+  const data = await api('/api/v1/dashboard/');
+  console.log('Dashboard API Response:', data);
+  state.me = data.data.user;
+  state.appData = data.data;
   syncBackLinks();
-  return data;
+  return data.data;
 };
 
 const renderDashboard = data => {
+  console.log('renderDashboard called with:', data);
   const me = data.user;
   const pickups = data.pickups || [];
   const uploads = data.uploads || [];
   const transactions = data.transactions || [];
+  console.log('Parsed data - me:', me, 'pickups:', pickups, 'uploads:', uploads, 'transactions:', transactions);
   const myPickups = pickups.filter(x => x.userId === me.id);
   const myUploads = uploads.filter(x => x.userId === me.id);
   const myTransactions = transactions.filter(x => x.userId === me.id);
@@ -452,38 +473,40 @@ const bootstrap = async () => {
       const confirmPassword = String(fd.get('confirm_password') || '');
       if (password !== confirmPassword) return msg(signupMsg, 'Passwords do not match.');
       if (!syncStrength().ok) return msg(signupMsg, 'Password must be strong before you continue.');
+      const email = String(fd.get('email') || '').trim();
       const payload = {
-        fullName: String(fd.get('full_name') || '').trim(),
-        email: String(fd.get('email') || '').trim(),
+        full_name: String(fd.get('full_name') || '').trim(),
+        email,
         phone: String(fd.get('phone') || '').trim(),
         password,
+        confirm_password: confirmPassword,
         role: String(fd.get('role') || '').trim(),
-        subtype: String(fd.get('generator_subtype') || fd.get('vendor_business_type') || fd.get('ngo_hub_type') || '').trim(),
-        userType: String(fd.get('generator_subtype') || fd.get('vendor_business_type') || fd.get('ngo_hub_type') || fd.get('role') || '').trim(),
-        referralCode: String(fd.get('referral_code') || '').trim(),
-        roleData: {
-          generatorSubtype: String(fd.get('generator_subtype') || '').trim(),
-          businessName: String(fd.get('vendor_business_name') || '').trim(),
-          businessType: String(fd.get('vendor_business_type') || '').trim(),
-          location: String(fd.get('vendor_location') || fd.get('ngo_location') || fd.get('hub_location') || '').trim(),
-          yearsOfOperation: String(fd.get('vendor_years') || '').trim(),
-          registrationNumber: String(fd.get('vendor_registration') || fd.get('ngo_registration') || fd.get('hub_registration') || '').trim(),
-          organizationName: String(fd.get('ngo_name') || '').trim(),
-          yearsActive: String(fd.get('ngo_years') || '').trim(),
-          focusArea: String(fd.get('ngo_focus') || '').trim(),
-          missionDescription: String(fd.get('ngo_mission') || '').trim(),
-          hubName: String(fd.get('hub_name') || '').trim(),
-          availability: String(fd.get('hub_availability') || '').trim(),
-          dailyCapacity: String(fd.get('hub_capacity') || '').trim(),
-          wasteTypesAccepted: String(fd.get('hub_waste_types') || '').trim()
-        }
+        referral_code: String(fd.get('referral_code') || '').trim(),
+        generator_subtype: String(fd.get('generator_subtype') || '').trim(),
+        vendor_business_name: String(fd.get('vendor_business_name') || '').trim(),
+        vendor_business_type: String(fd.get('vendor_business_type') || '').trim(),
+        vendor_location: String(fd.get('vendor_location') || '').trim(),
+        vendor_years: Number(fd.get('vendor_years') || 0),
+        vendor_registration: String(fd.get('vendor_registration') || '').trim(),
+        ngo_hub_type: String(fd.get('ngo_hub_type') || '').trim(),
+        ngo_name: String(fd.get('ngo_name') || '').trim(),
+        ngo_registration: String(fd.get('ngo_registration') || '').trim(),
+        ngo_years: Number(fd.get('ngo_years') || 0),
+        ngo_focus: String(fd.get('ngo_focus') || '').trim(),
+        ngo_location: String(fd.get('ngo_location') || '').trim(),
+        ngo_mission: String(fd.get('ngo_mission') || '').trim(),
+        hub_name: String(fd.get('hub_name') || '').trim(),
+        hub_capacity: Number(fd.get('hub_capacity') || 0),
+        hub_location: String(fd.get('hub_location') || '').trim(),
+        hub_availability: String(fd.get('hub_availability') || '').trim(),
+        hub_description: String(fd.get('hub_description') || '').trim()
       };
       loading(createBtn, true, 'Please wait...');
       loader.show('Creating account, please wait...');
       try {
-        const data = await api('/api/auth/signup/start', { method: 'POST', body: payload, auth: false });
-        setPendingSignup(data.pendingId);
-        msg(verMsg, `Verification code sent. Current code: ${data.verificationCode}`);
+        const data = await api('/api/v1/auth/signup', { method: 'POST', body: payload, auth: false });
+        setPendingSignup(email);
+        msg(verMsg, `Verification code sent. Current code: ${data.data?.otp || '(check email)'}`);
         setStep(steps, $('#verificationStep'));
       } catch (error) {
         msg(signupMsg, error.message);
@@ -495,12 +518,18 @@ const bootstrap = async () => {
 
     verifyForm.addEventListener('submit', async event => {
       event.preventDefault();
-      const body = { pendingId: readPendingId(), code: String(new FormData(verifyForm).get('verification_code') || '').trim() };
+      const body = {
+        email: getSignupEmail(),
+        verification_code: String(new FormData(verifyForm).get('verification_code') || '').trim()
+      };
       loader.show('Verifying, please wait...');
       try {
-        const data = await api('/api/auth/signup/verify', { method: 'POST', body, auth: false });
-        setPendingSignup(readPendingId(), data);
-        renderPhrase(data);
+        const data = await api('/api/v1/auth/verify', { method: 'POST', body, auth: false });
+        console.log('Verify response:', data);
+        console.log('data.data:', data.data);
+        setTempToken(data.data?.tempToken || '');
+        setPendingSignup(getSignupEmail(), data.data);
+        renderPhrase(data.data);
         setStep(steps, $('#walletStep'));
       } catch (error) {
         msg(verMsg, error.message);
@@ -516,13 +545,27 @@ const bootstrap = async () => {
       const cpin = String(fd.get('confirm_wallet_pin') || '').trim();
       if (pin !== cpin) return msg(wallMsg, 'Wallet PINs do not match.');
       const phraseData = readPendingPhrase();
-      const answers = Object.fromEntries((phraseData?.confirmPositions || []).map(pos => [pos, String(fd.get(`confirm_word_${pos}`) || '').trim()]));
+      const positions = phraseData?.confirmPositions || [];
+      const confirmedWords = positions.map(pos => ({
+        index: pos,
+        word: String(fd.get(`confirm_word_${pos}`) || '').trim().toLowerCase()
+      }));
       loader.show('Finalizing account, please wait...');
       try {
-        const data = await api('/api/auth/signup/complete', { method: 'POST', body: { pendingId: readPendingId(), pin, answers }, auth: false });
-        setToken(data.token);
+        const data = await api('/api/v1/auth/wallet-setup', {
+          method: 'POST',
+          body: {
+            wallet_pin: pin,
+            confirm_wallet_pin: cpin,
+            confirmed_words: confirmedWords
+          },
+          auth: false,
+          useTemp: true
+        });
+        setToken(data.data?.token || '');
+        setTempToken('');
         setPendingSignup('', null);
-        location.href = goRole(data.user.role);
+        location.href = goRole(data.data?.user?.role);
       } catch (error) {
         msg(wallMsg, error.message);
       } finally {
@@ -545,7 +588,7 @@ const bootstrap = async () => {
       msg(formMessage, '');
       const fd = new FormData(loginForm);
       try {
-        const data = await api('/api/auth/login', {
+        const data = await api('/api/v1/auth/login', {
           method: 'POST',
           body: {
             identifier: String(fd.get('identifier') || '').trim(),
@@ -553,8 +596,8 @@ const bootstrap = async () => {
           },
           auth: false
         });
-        setToken(data.token);
-        location.href = goRole(data.user.role);
+        setToken(data.data.token);
+        location.href = goRole(data.data.user.role);
       } catch (error) {
         msg(formMessage, error.message);
       }
@@ -563,9 +606,20 @@ const bootstrap = async () => {
 
   if ($('#dashboardPage')) {
     if (!me) return location.href = 'login.html';
-    const data = await loadAppData();
-    if (($('#dashboardPage').dataset.dashboardRole || 'generator') !== data.user.role) return location.href = goRole(data.user.role);
-    renderDashboard(data);
+    try {
+      console.log('Loading dashboard data for:', me);
+      const data = await loadAppData();
+      console.log('Dashboard data loaded successfully:', data);
+      if (($('#dashboardPage').dataset.dashboardRole || 'generator') !== data.user.role) {
+        console.warn('Role mismatch:', data.user.role, 'Expected:', $('#dashboardPage').dataset.dashboardRole);
+        return location.href = goRole(data.user.role);
+      }
+      console.log('Rendering dashboard with data:', data);
+      renderDashboard(data);
+    } catch (error) {
+      console.error('Dashboard loading error:', error);
+      showStartupError(`Dashboard error: ${error.message}`);
+    }
   }
 
   const pickupForm = $('#pickupForm');
@@ -580,7 +634,7 @@ const bootstrap = async () => {
       loading(button, true);
       loader.show('Submitting pickup request, please wait...');
       try {
-        await api('/api/pickups', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), pickupTime: String(fd.get('pickup_time') || '').trim(), notes: String(fd.get('notes') || '').trim() } });
+        await api('/api/v1/waste/pickup', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), pickupTime: String(fd.get('pickup_time') || '').trim(), notes: String(fd.get('notes') || '').trim() } });
         msg(messageEl, 'Pickup request sent.');
         pickupForm.reset();
       } catch (error) {
@@ -604,7 +658,7 @@ const bootstrap = async () => {
       loading(button, true);
       loader.show('Uploading waste, please wait...');
       try {
-        await api('/api/uploads', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), imageName: file ? file.name : '' } });
+        await api('/api/v1/waste/submit', { method: 'POST', body: { wasteType: String(fd.get('waste_type') || '').trim(), quantity: Number(fd.get('quantity') || 0), location: String(fd.get('location') || '').trim(), imageName: file ? file.name : '' } });
         msg(messageEl, 'Waste uploaded.');
         uploadForm.reset();
       } catch (error) {
@@ -619,7 +673,7 @@ const bootstrap = async () => {
   if ($('#walletPage')) {
     if (!me) return location.href = 'login.html';
     const data = await loadAppData();
-    $('#walletBalanceAmount') && ($('#walletBalanceAmount').textContent = fmtMoney(data.user.wallet.balance));
+    $('#walletBalanceAmount') && ($('#walletBalanceAmount').textContent = fmtMoney(data.wallet.balance));
     $('#walletIdMask') && ($('#walletIdMask').textContent = mask(data.user.id));
     $('#referralLinkText') && ($('#referralLinkText').textContent = data.user.referralLink || '');
     $('#referralCountText') && ($('#referralCountText').textContent = `${data.user.referralCount || 0} referrals`);

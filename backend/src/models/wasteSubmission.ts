@@ -1,19 +1,19 @@
 import { Schema, Document, model } from "mongoose";
 
 type WasteType =
-    | "plastic"
-    | "paper"
-    | "metal"
-    | "beverage_cans"
-    | "cartons"
-    | "glass"
-    | "electronics"
-    | "organic"
-    | "mixed";
+    | "Plastics"
+    | "Papers"
+    | "Metals"
+    | "Beverage Cans"
+    | "Cartons"
+    | "Glass"
+    | "Electronics"
+    | "Organic"
+    | "Mixed";
 
 type SubmissionStatus = "submitted" | "verified" | "approved" | "rejected" | "completed";
 
-interface IWasteSubmission extends Document {
+export interface IWasteSubmission extends Document {
     user: Schema.Types.ObjectId;
     waste_type: WasteType;
     quantity: number; // in kg
@@ -25,6 +25,7 @@ interface IWasteSubmission extends Document {
     submitted_at: Date;
     verified_at?: Date;
     pickup_scheduled_date?: Date;
+    location?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -40,15 +41,15 @@ const wasteSubmissionSchema = new Schema<IWasteSubmission>(
             type: String,
             enum: {
                 values: [
-                    "plastic",
-                    "paper",
-                    "metal",
-                    "beverage_cans",
-                    "cartons",
-                    "glass",
-                    "electronics",
-                    "organic",
-                    "mixed",
+                    "Plastics",
+                    "Papers",
+                    "Metals",
+                    "Beverage Cans",
+                    "Cartons",
+                    "Glass",
+                    "Electronics",
+                    "Organic",
+                    "Mixed",
                 ],
                 message: "Invalid waste type",
             },
@@ -77,13 +78,17 @@ const wasteSubmissionSchema = new Schema<IWasteSubmission>(
             ref: "CollectionHub",
         },
         images: [String],
-        description: String,
+        description: {
+            type: String,
+            trim: true,
+        },
         submitted_at: {
             type: Date,
             default: Date.now,
         },
         verified_at: Date,
         pickup_scheduled_date: Date,
+        location: String,
     },
     {
         timestamps: {

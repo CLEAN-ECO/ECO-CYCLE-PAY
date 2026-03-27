@@ -1,6 +1,15 @@
 import { Schema, Document, model } from "mongoose";
 
-type WasteType = "plastic" | "metal" | "glass" | "paper" | "organic" | "electronics" | "mixed";
+type WasteType =
+    | "Plastics"
+    | "Metals"
+    | "Beverage Cans"
+    | "Papers"
+    | "Cartons"
+    | "Glass"
+    | "Electronics"
+    | "Organic"
+    | "Mixed";
 
 type PickupStatus =
     | "requested"
@@ -10,7 +19,7 @@ type PickupStatus =
     | "completed"
     | "cancelled";
 
-interface IPickup extends Document {
+export interface IPickup extends Document {
     requester: Schema.Types.ObjectId; // Generator who requested pickup
     collector?: Schema.Types.ObjectId; // NGO/Hub who will collect
     waste_type: WasteType;
@@ -38,7 +47,17 @@ const pickupSchema = new Schema<IPickup>(
         waste_type: {
             type: String,
             enum: {
-                values: ["plastic", "metal", "glass", "paper", "organic", "electronics", "mixed"],
+                values: [
+                    "Plastics",
+                    "Metals",
+                    "Beverage Cans",
+                    "Papers",
+                    "Cartons",
+                    "Glass",
+                    "Electronics",
+                    "Organic",
+                    "Mixed",
+                ],
                 message: "Invalid waste type",
             },
             required: [true, "Waste type is required"],

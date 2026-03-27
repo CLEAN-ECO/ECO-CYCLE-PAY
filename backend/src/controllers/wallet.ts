@@ -48,8 +48,8 @@ export const getReferralLink = async (
         }
 
         return sendSuccess(res, "Referral link retrieved successfully", {
-            referral_code: referral.referral_code,
-            referral_link: referral.referral_link,
+            referral_code: referral.code,
+            referral_link: referral.link,
             clicks: referral.clicks,
             successful_referrals: referral.successful_referrals,
             total_earnings: referral.total_earnings,
@@ -68,7 +68,7 @@ export const trackReferralClick = async (req: Request, res: Response): Promise<R
         const { code } = req.params;
 
         const referral = await Referral.findOneAndUpdate(
-            { referral_code: (code as string).toUpperCase() },
+            { code: (code as string).toUpperCase() },
             { $inc: { clicks: 1 } },
             { new: true },
         );

@@ -17,18 +17,19 @@ import {
 } from "../utils/responseHelper";
 import { logger } from "../utils/logger";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
+import Pickup from "../models/pickup";
 
 // Pricing for different waste types (₦ per kg)
 const WASTE_PRICING: Record<string, number> = {
-    plastic: 150,
-    paper: 50,
-    metal: 200,
-    beverage_cans: 250,
-    cartons: 40,
-    glass: 80,
-    electronics: 500,
-    organic: 20,
-    mixed: 100,
+    Plastics: 150,
+    Papers: 50,
+    Metals: 200,
+    "Beverage Cans": 250,
+    Cartons: 40,
+    Glass: 80,
+    Electronics: 500,
+    Organic: 20,
+    Mixed: 100,
 };
 
 /**
@@ -50,6 +51,72 @@ export const getWasteCategories = async (req: Request, res: Response): Promise<R
 };
 
 /**
+ * Request waste pickup (for generators)
+ * This creates a pickup request that can be accepted by NGOs/Hubs
+ */
+export const requestPickup = async (
+    req: AuthenticatedRequest,
+    res: Response,
+): Promise<Response> => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return sendValidationErrors(res, errors.array());
+        }
+
+        const userId = req.user?.userId;
+        if (!userId) {
+            return sendUnauthorized(res, "User not authenticated");
+        }
+
+        const { wasteType, quantity, location, pickupTime, notes } = req.body as Record<
+            string,
+            unknown
+        >;
+
+        // Validate waste type
+        if (!WASTE_PRICING[wasteType as string]) {
+            return sendBadRequest(res, "Invalid waste type");
+        }
+        // Create pickup request
+        const pickup = new Pickup({
+            requester: userId,
+            waste_type: wasteType as string,
+            quantity: quantity as number,
+            pickup_location: location as string,
+            scheduled_date: new Date(pickupTime as string),
+            notes: notes as string,
+        });
+        await pickup.save();
+
+        // Log activity
+        await Activity.create({
+            user: userId,
+            type: "pickup_request",
+            title: "Pickup request created",
+            description: "A pickup request has been created and is awaiting acceptance.",
+            status: "pending",
+            reference_id: pickup._id.toString(),
+        });
+
+        logger(`Pickup request created: ${pickup._id} by user ${userId}`, "info");
+
+        return sendCreated(res, "Pickup request created successfully", {
+            pickup_id: pickup._id,
+            waste_type: wasteType,
+            quantity,
+            pickup_location: location,
+            scheduled_date: new Date(pickupTime as string),
+            notes,
+            status: "pending",
+        });
+    } catch (error) {
+        logger(`Request pickup error: ${error}`, "error");
+        return sendInternalError(res, "Failed to create pickup request");
+    }
+};
+
+/**
  * Submit waste for processing
  */
 export const submitWaste = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
@@ -64,25 +131,26 @@ export const submitWaste = async (req: AuthenticatedRequest, res: Response): Pro
             return sendUnauthorized(res, "User not authenticated");
         }
 
-        const { waste_type, quantity, description } = req.body as Record<string, unknown>;
+        const { wasteType, quantity, location, description } = req.body as Record<string, unknown>;
 
         // Validate waste type
-        if (!WASTE_PRICING[waste_type as string]) {
+        if (!WASTE_PRICING[wasteType as string]) {
             return sendBadRequest(res, "Invalid waste type");
         }
 
         // Calculate estimated value
-        const pricePerKg = WASTE_PRICING[waste_type as string];
+        const pricePerKg = WASTE_PRICING[wasteType as string];
         const estimatedValue = (quantity as number) * pricePerKg;
 
         // Create waste submission
         const submission = new WasteSubmission({
-            user_id: userId,
-            waste_type: waste_type as string,
+            user: userId,
+            waste_type: wasteType as string,
             quantity: quantity as number,
             estimated_value: estimatedValue,
             description,
             status: "submitted",
+            location: location as string,
         });
 
         await submission.save();
@@ -103,9 +171,10 @@ export const submitWaste = async (req: AuthenticatedRequest, res: Response): Pro
 
         return sendCreated(res, "Waste submitted successfully", {
             submission_id: submission._id,
-            waste_type,
+            waste_type: wasteType,
             quantity,
             estimated_value: estimatedValue,
+            location,
             status: "submitted",
         });
     } catch (error) {
