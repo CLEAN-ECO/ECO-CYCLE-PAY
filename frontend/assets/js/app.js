@@ -28,8 +28,7 @@ const apiBase = (() => {
   if (protocol === 'file:') return 'http://localhost:5000';
   // If on localhost:5500 (or :3000 or any dev port), connect to backend on port 5000
   if ((hostname === 'localhost' || hostname === '127.0.0.1') && port) return 'http://localhost:5000';
-  // Production: use relative paths or full URL
-  return 'https://eco-cycle-pay.onrender.com';
+  return '';
 })();
 
 const fmtMoney = n => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(n || 0));
